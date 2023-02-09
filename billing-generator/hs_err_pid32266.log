@@ -1,0 +1,396 @@
+#
+# There is insufficient memory for the Java Runtime Environment to continue.
+# Native memory allocation (mmap) failed to map 6442450944 bytes for committing reserved memory.
+# Possible reasons:
+#   The system is out of physical RAM or swap space
+#   The process is running with CompressedOops enabled, and the Java Heap may be blocking the growth of the native heap
+# Possible solutions:
+#   Reduce memory load on the system
+#   Increase physical memory or swap space
+#   Check if swap backing store is full
+#   Decrease Java heap size (-Xmx/-Xms)
+#   Decrease number of Java threads
+#   Decrease Java thread stack sizes (-Xss)
+#   Set larger code cache with -XX:ReservedCodeCacheSize=
+#   JVM is running with Zero Based Compressed Oops mode in which the Java heap is
+#     placed in the first 32GB address space. The Java Heap base address is the
+#     maximum limit for the native heap growth. Please use -XX:HeapBaseMinAddress
+#     to set the Java Heap base and to place the Java Heap above 32GB virtual address.
+# This output file may be truncated or incomplete.
+#
+#  Out of Memory Error (os_linux.cpp:2787), pid=32266, tid=32271
+#
+# JRE version:  (17.0.5+8) (build )
+# Java VM: OpenJDK 64-Bit Server VM (17.0.5+8, mixed mode, emulated-client, sharing, tiered, compressed oops, compressed class ptrs, g1 gc, linux-amd64)
+# Core dump will be written. Default location: Core dumps may be processed with "/usr/libexec/abrt-hook-ccpp %s %c %p %u %g %t e %P %I %h" (or dumping to /home/brayan.rios/eclipse-workspace-2/billing-generator/core.32266)
+#
+
+---------------  S U M M A R Y ------------
+
+Command Line: -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=46687 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=localhost -Dspring.jmx.enabled=true -Dspring.application.admin.enabled=true -Djava.security.egd=file:/dev/./urandom -Xms6144m -Xmx6144m -XX:TieredStopAtLevel=1 -Dspring.boot.project.name=billing-generator -Dfile.encoding=UTF-8 -XX:+ShowCodeDetailsInExceptionMessages com.jtc.app.BillingGeneratorApplication --spring.output.ansi.enabled=always
+
+Host: Intel(R) Core(TM) i7-9700 CPU @ 3.00GHz, 8 cores, 15G, CentOS Linux release 7.9.2009 (Core)
+Time: Tue Jan 17 09:02:51 2023 -05 elapsed time: 0.029820 seconds (0d 0h 0m 0s)
+
+---------------  T H R E A D  ---------------
+
+Current thread (0x00007f39b4029090):  JavaThread "Unknown thread" [_thread_in_vm, id=32271, stack(0x00007f39ba3e7000,0x00007f39ba4e8000)]
+
+Stack: [0x00007f39ba3e7000,0x00007f39ba4e8000],  sp=0x00007f39ba4e6410,  free space=1021k
+Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+V  [libjvm.so+0xed9801]  VMError::report_and_die(int, char const*, char const*, __va_list_tag*, Thread*, unsigned char*, void*, void*, char const*, int, unsigned long)+0x1a1
+V  [libjvm.so+0xeda3cd]  VMError::report_and_die(Thread*, char const*, int, unsigned long, VMErrorType, char const*, __va_list_tag*)+0x2d
+V  [libjvm.so+0x605913]  report_vm_out_of_memory(char const*, int, unsigned long, VMErrorType, char const*, ...)+0xc3
+V  [libjvm.so+0xc14b28]  os::pd_commit_memory_or_exit(char*, unsigned long, unsigned long, bool, char const*)+0xd8
+V  [libjvm.so+0xc0dddd]  os::commit_memory_or_exit(char*, unsigned long, unsigned long, bool, char const*)+0x1d
+V  [libjvm.so+0x7308de]  G1PageBasedVirtualSpace::commit(unsigned long, unsigned long)+0x18e
+V  [libjvm.so+0x745141]  G1RegionsLargerThanCommitSizeMapper::commit_regions(unsigned int, unsigned long, WorkGang*)+0x1a1
+V  [libjvm.so+0x7d5ae8]  HeapRegionManager::commit_regions(unsigned int, unsigned long, WorkGang*)+0x58
+V  [libjvm.so+0x7d6ef5]  HeapRegionManager::expand(unsigned int, unsigned int, WorkGang*)+0x35
+V  [libjvm.so+0x7d710e]  HeapRegionManager::expand_by(unsigned int, WorkGang*)+0x7e
+V  [libjvm.so+0x6eb1ef]  G1CollectedHeap::expand(unsigned long, WorkGang*, double*)+0xef
+V  [libjvm.so+0x6eb99f]  G1CollectedHeap::initialize()+0x72f
+V  [libjvm.so+0xe87fa2]  universe_init()+0xd2
+V  [libjvm.so+0x7f73c7]  init_globals()+0x37
+V  [libjvm.so+0xe5f247]  Threads::create_vm(JavaVMInitArgs*, bool*)+0x387
+V  [libjvm.so+0x8b4922]  JNI_CreateJavaVM+0x52
+C  [libjli.so+0x4a0f]  JavaMain+0x8f
+C  [libjli.so+0x8cf9]  ThreadJavaMain+0x9
+
+
+---------------  P R O C E S S  ---------------
+
+Threads class SMR info:
+_java_thread_list=0x00007f39b98fc4e0, length=0, elements={
+}
+
+Java Threads: ( => current thread )
+
+Other Threads:
+  0x00007f39b40529e0 GCTaskThread "GC Thread#0" [stack: 0x00007f399e012000,0x00007f399e112000] [id=32273]
+  0x00007f39b4060100 ConcurrentGCThread "G1 Main Marker" [stack: 0x00007f399df10000,0x00007f399e010000] [id=32274]
+  0x00007f39b4061180 ConcurrentGCThread "G1 Conc#0" [stack: 0x00007f399de0e000,0x00007f399df0e000] [id=32275]
+
+[error occurred during error reporting (printing all threads), id 0xb, SIGSEGV (0xb) at pc=0x00007f39b8ccbc70]
+
+VM state: not at safepoint (not fully initialized)
+
+VM Mutex/Monitor currently owned by a thread:  ([mutex/lock_event])
+[0x00007f39b4025310] Heap_lock - owner thread: 0x00007f39b4029090
+
+Heap address: 0x0000000680000000, size: 6144 MB, Compressed Oops mode: Zero based, Oop shift amount: 3
+
+CDS archive(s) mapped at: [0x0000000000000000-0x0000000000000000-0x0000000000000000), size 0, SharedBaseAddress: 0x0000000800000000, ArchiveRelocationMode: 0.
+Narrow klass base: 0x0000000000000000, Narrow klass shift: 0, Narrow klass range: 0x0
+
+GC Precious Log:
+<Empty>
+
+Heap:
+ garbage-first heap   total 0K, used 0K [0x0000000680000000, 0x0000000800000000)
+  region size 4096K, 0 young (0K), 0 survivors (0K)
+
+[error occurred during error reporting (printing heap information), id 0xb, SIGSEGV (0xb) at pc=0x00007f39b928091a]
+
+GC Heap History (0 events):
+No events
+
+Dll operation events (1 events):
+Event: 0.001 Loaded shared library /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/lib/libjava.so
+
+Deoptimization events (0 events):
+No events
+
+Classes unloaded (0 events):
+No events
+
+Classes redefined (0 events):
+No events
+
+Internal exceptions (0 events):
+No events
+
+VM Operations (0 events):
+No events
+
+Events (1 events):
+Event: 0.001 Protecting memory [0x00007f39ba3e7000,0x00007f39ba3eb000] with protection modes 0
+
+
+Dynamic libraries:
+55fa92835000-55fa92836000 r--p 00000000 fd:02 142420934                  /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/bin/java
+55fa92836000-55fa92837000 r-xp 00001000 fd:02 142420934                  /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/bin/java
+55fa92837000-55fa92838000 r--p 00002000 fd:02 142420934                  /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/bin/java
+55fa92838000-55fa92839000 r--p 00002000 fd:02 142420934                  /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/bin/java
+55fa92839000-55fa9283a000 rw-p 00003000 fd:02 142420934                  /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/bin/java
+55fa931cd000-55fa93217000 rw-p 00000000 00:00 0                          [heap]
+7f398e000000-7f3990000000 rw-p 00000000 00:00 0 
+7f3990000000-7f3990021000 rw-p 00000000 00:00 0 
+7f3990021000-7f3994000000 ---p 00000000 00:00 0 
+7f3994000000-7f3994021000 rw-p 00000000 00:00 0 
+7f3994021000-7f3998000000 ---p 00000000 00:00 0 
+7f3998000000-7f3998021000 rw-p 00000000 00:00 0 
+7f3998021000-7f399c000000 ---p 00000000 00:00 0 
+7f399d219000-7f399de0c000 rw-p 00000000 00:00 0 
+7f399de0c000-7f399de0d000 ---p 00000000 00:00 0 
+7f399de0d000-7f399df0e000 rw-p 00000000 00:00 0 
+7f399df0e000-7f399df0f000 ---p 00000000 00:00 0 
+7f399df0f000-7f399e010000 rw-p 00000000 00:00 0 
+7f399e010000-7f399e011000 ---p 00000000 00:00 0 
+7f399e011000-7f399e112000 rw-p 00000000 00:00 0 
+7f399e112000-7f39ac512000 ---p 00000000 00:00 0 
+7f39ac512000-7f39acd1a000 rw-p 00000000 00:00 0 
+7f39acd1a000-7f39acf8a000 rwxp 00000000 00:00 0 
+7f39acf8a000-7f39afd1a000 ---p 00000000 00:00 0 
+7f39afd1a000-7f39b0585000 r--s 00000000 fd:00 2283641                    /var/lib/sss/mc/passwd
+7f39b0585000-7f39b058d000 r-xp 00000000 fd:00 67926511                   /usr/lib64/libnss_sss.so.2
+7f39b058d000-7f39b078c000 ---p 00008000 fd:00 67926511                   /usr/lib64/libnss_sss.so.2
+7f39b078c000-7f39b078d000 r--p 00007000 fd:00 67926511                   /usr/lib64/libnss_sss.so.2
+7f39b078d000-7f39b078e000 rw-p 00008000 fd:00 67926511                   /usr/lib64/libnss_sss.so.2
+7f39b078e000-7f39b079a000 r-xp 00000000 fd:00 67831680                   /usr/lib64/libnss_files-2.17.so
+7f39b079a000-7f39b0999000 ---p 0000c000 fd:00 67831680                   /usr/lib64/libnss_files-2.17.so
+7f39b0999000-7f39b099a000 r--p 0000b000 fd:00 67831680                   /usr/lib64/libnss_files-2.17.so
+7f39b099a000-7f39b099b000 rw-p 0000c000 fd:00 67831680                   /usr/lib64/libnss_files-2.17.so
+7f39b099b000-7f39b09a1000 rw-p 00000000 00:00 0 
+7f39b09a1000-7f39b4000000 r--s 00000000 fd:02 72891839                   /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/lib/modules
+7f39b4000000-7f39b408e000 rw-p 00000000 00:00 0 
+7f39b408e000-7f39b8000000 ---p 00000000 00:00 0 
+7f39b8027000-7f39b80be000 rw-p 00000000 00:00 0 
+7f39b80be000-7f39b81bf000 r-xp 00000000 fd:00 67750684                   /usr/lib64/libm-2.17.so
+7f39b81bf000-7f39b83be000 ---p 00101000 fd:00 67750684                   /usr/lib64/libm-2.17.so
+7f39b83be000-7f39b83bf000 r--p 00100000 fd:00 67750684                   /usr/lib64/libm-2.17.so
+7f39b83bf000-7f39b83c0000 rw-p 00101000 fd:00 67750684                   /usr/lib64/libm-2.17.so
+7f39b83c0000-7f39b83c7000 r-xp 00000000 fd:00 67877173                   /usr/lib64/librt-2.17.so
+7f39b83c7000-7f39b85c6000 ---p 00007000 fd:00 67877173                   /usr/lib64/librt-2.17.so
+7f39b85c6000-7f39b85c7000 r--p 00006000 fd:00 67877173                   /usr/lib64/librt-2.17.so
+7f39b85c7000-7f39b85c8000 rw-p 00007000 fd:00 67877173                   /usr/lib64/librt-2.17.so
+7f39b85c8000-7f39b881a000 r--p 00000000 fd:02 15120703                   /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/lib/server/libjvm.so
+7f39b881a000-7f39b9533000 r-xp 00252000 fd:02 15120703                   /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/lib/server/libjvm.so
+7f39b9533000-7f39b97be000 r--p 00f6b000 fd:02 15120703                   /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/lib/server/libjvm.so
+7f39b97be000-7f39b97bf000 ---p 011f6000 fd:02 15120703                   /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/lib/server/libjvm.so
+7f39b97bf000-7f39b9878000 r--p 011f6000 fd:02 15120703                   /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/lib/server/libjvm.so
+7f39b9878000-7f39b98ad000 rw-p 012af000 fd:02 15120703                   /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/lib/server/libjvm.so
+7f39b98ad000-7f39b9907000 rw-p 00000000 00:00 0 
+7f39b9907000-7f39b9acb000 r-xp 00000000 fd:00 67109562                   /usr/lib64/libc-2.17.so
+7f39b9acb000-7f39b9cca000 ---p 001c4000 fd:00 67109562                   /usr/lib64/libc-2.17.so
+7f39b9cca000-7f39b9cce000 r--p 001c3000 fd:00 67109562                   /usr/lib64/libc-2.17.so
+7f39b9cce000-7f39b9cd0000 rw-p 001c7000 fd:00 67109562                   /usr/lib64/libc-2.17.so
+7f39b9cd0000-7f39b9cd5000 rw-p 00000000 00:00 0 
+7f39b9cd5000-7f39b9cd7000 r-xp 00000000 fd:00 67750682                   /usr/lib64/libdl-2.17.so
+7f39b9cd7000-7f39b9ed7000 ---p 00002000 fd:00 67750682                   /usr/lib64/libdl-2.17.so
+7f39b9ed7000-7f39b9ed8000 r--p 00002000 fd:00 67750682                   /usr/lib64/libdl-2.17.so
+7f39b9ed8000-7f39b9ed9000 rw-p 00003000 fd:00 67750682                   /usr/lib64/libdl-2.17.so
+7f39b9ed9000-7f39b9ef0000 r-xp 00000000 fd:00 67131636                   /usr/lib64/libpthread-2.17.so
+7f39b9ef0000-7f39ba0ef000 ---p 00017000 fd:00 67131636                   /usr/lib64/libpthread-2.17.so
+7f39ba0ef000-7f39ba0f0000 r--p 00016000 fd:00 67131636                   /usr/lib64/libpthread-2.17.so
+7f39ba0f0000-7f39ba0f1000 rw-p 00017000 fd:00 67131636                   /usr/lib64/libpthread-2.17.so
+7f39ba0f1000-7f39ba0f5000 rw-p 00000000 00:00 0 
+7f39ba0f5000-7f39ba10a000 r-xp 00000000 fd:00 67139675                   /usr/lib64/libz.so.1.2.7
+7f39ba10a000-7f39ba309000 ---p 00015000 fd:00 67139675                   /usr/lib64/libz.so.1.2.7
+7f39ba309000-7f39ba30a000 r--p 00014000 fd:00 67139675                   /usr/lib64/libz.so.1.2.7
+7f39ba30a000-7f39ba30b000 rw-p 00015000 fd:00 67139675                   /usr/lib64/libz.so.1.2.7
+7f39ba30b000-7f39ba32d000 r-xp 00000000 fd:00 67139653                   /usr/lib64/ld-2.17.so
+7f39ba32d000-7f39ba363000 rw-p 00000000 00:00 0 
+7f39ba363000-7f39ba3be000 ---p 00000000 00:00 0 
+7f39ba3be000-7f39ba3cb000 r--p 00000000 fd:02 72891847                   /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/lib/libjava.so
+7f39ba3cb000-7f39ba3dd000 r-xp 0000d000 fd:02 72891847                   /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/lib/libjava.so
+7f39ba3dd000-7f39ba3e3000 r--p 0001f000 fd:02 72891847                   /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/lib/libjava.so
+7f39ba3e3000-7f39ba3e4000 ---p 00025000 fd:02 72891847                   /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/lib/libjava.so
+7f39ba3e4000-7f39ba3e5000 r--p 00025000 fd:02 72891847                   /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/lib/libjava.so
+7f39ba3e5000-7f39ba3e6000 rw-p 00026000 fd:02 72891847                   /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/lib/libjava.so
+7f39ba3e6000-7f39ba3e7000 rw-p 00000000 00:00 0 
+7f39ba3e7000-7f39ba3eb000 ---p 00000000 00:00 0 
+7f39ba3eb000-7f39ba4ec000 rw-p 00000000 00:00 0 
+7f39ba4ec000-7f39ba4ef000 r--p 00000000 fd:02 72891849                   /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/lib/libjli.so
+7f39ba4ef000-7f39ba4f9000 r-xp 00003000 fd:02 72891849                   /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/lib/libjli.so
+7f39ba4f9000-7f39ba4fc000 r--p 0000d000 fd:02 72891849                   /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/lib/libjli.so
+7f39ba4fc000-7f39ba4fd000 ---p 00010000 fd:02 72891849                   /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/lib/libjli.so
+7f39ba4fd000-7f39ba4fe000 r--p 00010000 fd:02 72891849                   /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/lib/libjli.so
+7f39ba4fe000-7f39ba4ff000 rw-p 00011000 fd:02 72891849                   /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/lib/libjli.so
+7f39ba4ff000-7f39ba500000 rw-p 00000000 00:00 0 
+7f39ba500000-7f39ba508000 rw-s 00000000 fd:00 205909601                  /tmp/hsperfdata_brayan.rios/32266
+7f39ba508000-7f39ba509000 ---p 00000000 00:00 0 
+7f39ba509000-7f39ba50a000 r--p 00000000 00:00 0 
+7f39ba50a000-7f39ba50b000 ---p 00000000 00:00 0 
+7f39ba50b000-7f39ba50f000 r--p 00000000 fd:02 72891848                   /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/lib/libjimage.so
+7f39ba50f000-7f39ba522000 r-xp 00004000 fd:02 72891848                   /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/lib/libjimage.so
+7f39ba522000-7f39ba528000 r--p 00017000 fd:02 72891848                   /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/lib/libjimage.so
+7f39ba528000-7f39ba52a000 r--p 0001c000 fd:02 72891848                   /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/lib/libjimage.so
+7f39ba52a000-7f39ba52b000 rw-p 0001e000 fd:02 72891848                   /home/brayan.rios/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.linux.x86_64_17.0.5.v20221102-0933/jre/lib/libjimage.so
+7f39ba52b000-7f39ba52c000 rw-p 00000000 00:00 0 
+7f39ba52c000-7f39ba52d000 r--p 00021000 fd:00 67139653                   /usr/lib64/ld-2.17.so
+7f39ba52d000-7f39ba52e000 rw-p 00022000 fd:00 67139653                   /usr/lib64/ld-2.17.so
+7f39ba52e000-7f39ba52f000 rw-p 00000000 00:00 0 
+7ffdd10b1000-7ffdd10d5000 rw-p 00000000 00:00 0                          [stack]
+7ffdd1129000-7ffdd112b000 r-xp 00000000 00:00 0                          [vdso]
+ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsyscall]
+
+
+VM Arguments:
+jvm_args: -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=46687 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=localhost -Dspring.jmx.enabled=true -Dspring.application.admin.enabled=true -Djava.security.egd=file:/dev/./urandom -Xms6144m -Xmx6144m -XX:TieredStopAtLevel=1 -Dspring.boot.project.name=billing-generator -Dfile.encoding=UTF-8 -XX:+ShowCodeDetailsInExceptionMessages 
+java_command: com.jtc.app.BillingGeneratorApplication --spring.output.ansi.enabled=always
+java_class_path (initial): /home/brayan.rios/eclipse-workspace-2/billing-generator/target/classes:/p_18.3_FACELDI_2022/18.3.2_TRABAJO/18.3.2.17_BrayanRios/Developed Jars/Common Libraries/slf4j-simple-2.0.5.jar:/home/brayan.rios/.m2/repository/org/slf4j/slf4j-api/2.0.5/slf4j-api-2.0.5.jar:/home/brayan.rios/.m2/repository/org/springframework/boot/spring-boot-starter-validation/2.6.14/spring-boot-starter-validation-2.6.14.jar:/home/brayan.rios/.m2/repository/org/springframework/boot/spring-boot-starter/2.6.14/spring-boot-starter-2.6.14.jar:/home/brayan.rios/.m2/repository/org/springframework/boot/spring-boot-starter-logging/2.6.14/spring-boot-starter-logging-2.6.14.jar:/home/brayan.rios/.m2/repository/ch/qos/logback/logback-classic/1.2.11/logback-classic-1.2.11.jar:/home/brayan.rios/.m2/repository/org/apache/logging/log4j/log4j-to-slf4j/2.17.2/log4j-to-slf4j-2.17.2.jar:/home/brayan.rios/.m2/repository/org/slf4j/jul-to-slf4j/1.7.36/jul-to-slf4j-1.7.36.jar:/home/brayan.rios/.m2/repository/jakarta/annotation/jakarta.annotation-api/1.3.5/jakarta.annotation-api-1.3.5.jar:/home/brayan.rios/.m2/repository/org/yaml/snakeyaml/1.29/snakeyaml-1.29.jar:/home/brayan.rios/.m2/repository/org/apache/tomcat/embed/tomcat-embed-el/9.0.69/tomcat-embed-el-9.0.69.jar:/home/brayan.rios/.m2/repository/org/hibernate/validator/hibernate-validator/6.2.5.Final/hibernate-validator-6.2.5.Final.jar:/home/brayan.rios/.m2/repository/jakarta/validation/jakarta.validation-api/2.0.2/jakarta.validation-api-2.0.2.jar:/home/brayan.rios/.m2/repository/org/jboss/logging/jboss-logging/3.4.3.Final/jboss-logging-3.4.3.Final.jar:/home/brayan.rios/.m2/repository/org/springframework/boot/spring-boot-starter-data-jpa/2.6.14/spring-boot-starter-data-jpa-2.6.14.jar:/home/brayan.rios/.m2/repository/org/springframework/boot/spring-boot-starter-aop/2.6.14/spring-boot-starter-aop-2.6.14.jar:/home/brayan.rios/.m2/repository/org/springframework/spring-aop/5.3.24/spring-aop-5.3.24.jar:/home/brayan.rios/.m2/repository/org/a
+Launcher Type: SUN_STANDARD
+
+[Global flags]
+     intx CICompilerCount                          = 4                                         {product} {ergonomic}
+     uint ConcGCThreads                            = 2                                         {product} {ergonomic}
+     uint G1ConcRefinementThreads                  = 8                                         {product} {ergonomic}
+   size_t G1HeapRegionSize                         = 4194304                                   {product} {ergonomic}
+    uintx GCDrainStackTargetSize                   = 64                                        {product} {ergonomic}
+   size_t InitialHeapSize                          = 6442450944                                {product} {command line}
+     bool ManagementServer                         = true                                      {product} {command line}
+   size_t MarkStackSize                            = 4194304                                   {product} {ergonomic}
+   size_t MaxHeapSize                              = 6442450944                                {product} {command line}
+   size_t MinHeapDeltaBytes                        = 4194304                                   {product} {ergonomic}
+   size_t MinHeapSize                              = 6442450944                                {product} {command line}
+    uintx NonProfiledCodeHeapSize                  = 0                                      {pd product} {ergonomic}
+     bool ProfileInterpreter                       = false                                  {pd product} {command line}
+    uintx ProfiledCodeHeapSize                     = 0                                      {pd product} {ergonomic}
+     bool ShowCodeDetailsInExceptionMessages       = true                                   {manageable} {command line}
+   size_t SoftMaxHeapSize                          = 6442450944                             {manageable} {ergonomic}
+     intx TieredStopAtLevel                        = 1                                         {product} {command line}
+     bool UseCompressedClassPointers               = true                           {product lp64_product} {ergonomic}
+     bool UseCompressedOops                        = true                           {product lp64_product} {ergonomic}
+     bool UseG1GC                                  = true                                      {product} {ergonomic}
+
+Logging:
+Log output configuration:
+ #0: stdout all=warning uptime,level,tags
+ #1: stderr all=off uptime,level,tags
+
+Environment Variables:
+JAVA_HOME=/usr/lib/jvm/jre-1.8.0
+PATH=/usr/lib64/qt-3.3/bin:/home/brayan.rios/perl5/bin:/opt/maven/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:/var/lib/snapd/snap/bin
+USERNAME=brayan.rios
+SHELL=/bin/sh
+DISPLAY=:0
+LANG=es_CO.UTF-8
+TERM=dumb
+
+Signal Handlers:
+   SIGSEGV: crash_handler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO
+    SIGBUS: crash_handler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO
+    SIGFPE: crash_handler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO
+   SIGPIPE: javaSignalHandler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO
+   SIGXFSZ: javaSignalHandler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO
+    SIGILL: crash_handler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO
+   SIGUSR2: SR_handler in libjvm.so, mask=00100000000000000000000000000000, flags=SA_RESTART|SA_SIGINFO
+    SIGHUP: SIG_DFL, mask=00000000000000000000000000000000, flags=none
+    SIGINT: SIG_DFL, mask=00000000000000000000000000000000, flags=none
+   SIGTERM: SIG_DFL, mask=00000000000000000000000000000000, flags=none
+   SIGQUIT: javaSignalHandler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO
+   SIGTRAP: crash_handler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO
+
+
+---------------  S Y S T E M  ---------------
+
+OS:
+CentOS Linux release 7.9.2009 (Core)
+uname: Linux 3.10.0-1160.76.1.el7.x86_64 #1 SMP Wed Aug 10 16:21:17 UTC 2022 x86_64
+OS uptime: 0 days 18:17 hours
+libc: glibc 2.17 NPTL 2.17 
+rlimit (soft/hard): STACK 8192k/infinity , CORE 0k/infinity , NPROC 4096/62886 , NOFILE 4096/4096 , AS infinity/infinity , CPU infinity/infinity , DATA infinity/infinity , FSIZE infinity/infinity , MEMLOCK 64k/64k
+load average: 1.82 1.17 1.54
+
+/proc/meminfo:
+MemTotal:       16133564 kB
+MemFree:         5098044 kB
+MemAvailable:    5642352 kB
+Buffers:             468 kB
+Cached:          2037948 kB
+SwapCached:            0 kB
+Active:          8993060 kB
+Inactive:        1463276 kB
+Active(anon):    8536292 kB
+Inactive(anon):  1150572 kB
+Active(file):     456768 kB
+Inactive(file):   312704 kB
+Unevictable:        5160 kB
+Mlocked:              96 kB
+SwapTotal:             0 kB
+SwapFree:              0 kB
+Dirty:             87312 kB
+Writeback:             0 kB
+AnonPages:       8424900 kB
+Mapped:           894416 kB
+Shmem:           1268412 kB
+Slab:             166680 kB
+SReclaimable:      63244 kB
+SUnreclaim:       103436 kB
+KernelStack:       29344 kB
+PageTables:       136456 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:     8066780 kB
+Committed_AS:   22909032 kB
+VmallocTotal:   34359738367 kB
+VmallocUsed:      575696 kB
+VmallocChunk:   34358423548 kB
+Percpu:             2656 kB
+HardwareCorrupted:     0 kB
+AnonHugePages:   2736128 kB
+CmaTotal:              0 kB
+CmaFree:               0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+DirectMap4k:      148148 kB
+DirectMap2M:     7059456 kB
+DirectMap1G:     9437184 kB
+
+/sys/kernel/mm/transparent_hugepage/enabled: [always] madvise never
+/sys/kernel/mm/transparent_hugepage/defrag (defrag/compaction efforts parameter): [always] madvise never
+
+Process Memory:
+Virtual Size: 707988K (peak: 6995420K)
+Resident Set Size: 12252K (peak: 12252K) (anon: 6248K, file: 6004K, shmem: 0K)
+Swapped out: 0K
+C-Heap outstanding allocations: 21599K, retained: 532K
+glibc malloc tunables: (default)
+
+/proc/sys/kernel/threads-max (system-wide limit on the number of threads): 125772
+/proc/sys/vm/max_map_count (maximum number of memory map areas a process may have): 65530
+/proc/sys/kernel/pid_max (system-wide limit on number of process identifiers): 32768
+
+container (cgroup) information:
+container_type: cgroupv1
+cpu_cpuset_cpus: 0-7
+cpu_memory_nodes: 0
+active_processor_count: 8
+cpu_quota: no quota
+cpu_period: 100000
+cpu_shares: no shares
+memory_limit_in_bytes: unlimited
+memory_and_swap_limit_in_bytes: unlimited
+memory_soft_limit_in_bytes: unlimited
+memory_usage_in_bytes: 9649224 k
+memory_max_usage_in_bytes: 14610700 k
+maximum number of tasks: unlimited
+current number of tasks: 1457
+
+Steal ticks since vm start: 0
+Steal ticks percentage since vm start:  0.000
+
+CPU: total 8 (initial active 8) (8 cores per cpu, 1 threads per core) family 6 model 158 stepping 13 microcode 0xf0, cx8, cmov, fxsr, mmx, 3dnowpref, sse, sse2, sse3, ssse3, sse4.1, sse4.2, popcnt, lzcnt, tsc, tscinvbit, avx, avx2, aes, erms, clmul, bmi1, bmi2, rtm, adx, fma, vzeroupper, clflush, clflushopt
+CPU Model and flags from /proc/cpuinfo:
+model name	: Intel(R) Core(TM) i7-9700 CPU @ 3.00GHz
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc aperfmperf eagerfpu pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch invpcid_single intel_pt ssbd ibrs ibpb stibp ibrs_enhanced tpr_shadow vnmi flexpriority ept vpid fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm mpx rdseed adx smap clflushopt xsaveopt xsavec xgetbv1 dtherm ida arat pln pts hwp hwp_notify hwp_act_window hwp_epp md_clear spec_ctrl intel_stibp flush_l1d arch_capabilities
+
+Online cpus: 0-7
+Offline cpus: 
+BIOS frequency limitation: <Not Available>
+Frequency switch latency (ns): 4294967295
+Available cpu frequencies: <Not Available>
+Current governor: powersave
+Core performance/turbo boost: <Not Available>
+
+Memory: 4k page, physical 16133564k(5098044k free), swap 0k(0k free)
+Page Sizes: 4k
+
+vm_info: OpenJDK 64-Bit Server VM (17.0.5+8) for linux-amd64 JRE (17.0.5+8), built on Oct 18 2022 00:00:00 by "temurin" with gcc 10.3.0
+
+END.
