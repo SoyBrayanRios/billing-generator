@@ -118,8 +118,6 @@ public class BillServiceImpl implements BillService {
 		return billRepository.getFaceldiReport(year, month);
 	}
 
-	// TODO Join both generateBills methods
-
 	@Override
 	public JsonResponse generateBills(Long year, Long month, Long invoiceNumber, String environment) {
 		this.initialInvoiceNumber = invoiceNumber;
@@ -163,13 +161,13 @@ public class BillServiceImpl implements BillService {
 		getBillsToCollectDueSharedContracts(year, month, invoiceDetailFullMap, resumes, false);
 		saveBills(year, month, invoiceDetailFullMap, false);
 		Object[] result = generateFaceldiFile(year, month, "S");
-		this.tempSmartFile= generateSmartFile(year, month, "S");
+		this.tempSmartFile = generateSmartFile(year, month, "S");
 
 		this.initialInvoiceNumber = 0L;
 		this.lastInvoiceNumber = initialInvoiceNumber;
 		return result;
 	}
-	
+
 	@Override
 	public Object[] getSmartFile() {
 		return this.tempSmartFile;
@@ -223,8 +221,9 @@ public class BillServiceImpl implements BillService {
 			LinkedHashMap<Long, Long[]> invoiceDetailMap = new LinkedHashMap<>();
 			// Calcular el costo
 			Contract contract = contractRepository.findByBranchId(resume.getBranch().getBranchId());
+
 			if (contract != null) {
-				System.out.println(contract.getContractId());
+				// System.out.println(contract.getContractId());
 				boolean skip = Optional.ofNullable(sharedContractsFilter.contains(contract.getContractId()))
 						.orElse(false);
 				if (skip == false) {
@@ -238,8 +237,9 @@ public class BillServiceImpl implements BillService {
 							Calendar calendar = Calendar.getInstance();
 							Calendar dinamycCalendar = Calendar.getInstance();
 							calendar.set(year.intValue(), month.intValue() - 1, 1, 0, 0, 0);
-							dinamycCalendar.set(contractDate.getYear() + 1900, contractDate.getMonth(), contractDate.getDate(), 23, 59, 59);
-							//int lastDayOfMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
+							dinamycCalendar.set(contractDate.getYear() + 1900, contractDate.getMonth(),
+									contractDate.getDate(), 23, 59, 59);
+							// int lastDayOfMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
 							// Calcula vencimiento de la anualidad
 							if (calendar.get(Calendar.YEAR) > dinamycCalendar.get(Calendar.YEAR)) {
 								if (calendar.get(Calendar.MONTH) <= dinamycCalendar.get(Calendar.MONTH)) {
@@ -258,20 +258,22 @@ public class BillServiceImpl implements BillService {
 							// aplica, generar cobro
 							if (chargeSubscription) {
 								calendar.set(year.intValue(), month.intValue() - 1, dinamycCalendar.get(Calendar.DATE));
-								//calendar.add(Calendar.DATE, -1);
+								// calendar.add(Calendar.DATE, -1);
 							} else {
-								//calendar.set(year.intValue(), month.intValue() - 1, lastDayOfMonth);
+								// calendar.set(year.intValue(), month.intValue() - 1, lastDayOfMonth);
 								calendar.set(year.intValue(), month.intValue(), 1);
 							}
-							
+
 							Long issuedDocs = invoiceRepository.getIssuedInvoicesDuringContract(
 									resume.getBranch().getBranchId(), dinamycCalendar.getTime(), calendar.getTime());
 							// Calcular las facturas emitidas del mes anterior
 
-							/*calendar.add(Calendar.MONTH, -1);
-							calendar.set(Calendar.DATE, calendar.getActualMaximum(Calendar.DAY_OF_MONTH));*/
+							/*
+							 * calendar.add(Calendar.MONTH, -1); calendar.set(Calendar.DATE,
+							 * calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
+							 */
 							calendar.set(year.intValue(), month.intValue() - 1, 1);
-							
+
 							Long issuedDocsLastMonth = invoiceRepository.getIssuedInvoicesDuringContract(
 									resume.getBranch().getBranchId(), dinamycCalendar.getTime(), calendar.getTime());
 
@@ -302,8 +304,11 @@ public class BillServiceImpl implements BillService {
 		List<Contract> contracts = contractRepository.findAll();
 		Set<Long> keys = invoiceDetailFullMap.keySet();
 
-		List<Contract> contractsFiltered = contracts.stream().filter(c -> !keys.contains(c.getBranch().getBranchId())
-				&& c.getBranch().getActive() && !c.getSharedMaintenance())
+		List<String> sharedContractsFilter = contractRepository.getSharedContracts();
+
+		List<Contract> contractsFiltered = contracts.stream()
+				.filter(c -> !keys.contains(c.getBranch().getBranchId()) && c.getBranch().getActive()
+						&& !c.getSharedMaintenance() && !sharedContractsFilter.contains(c.getContractId()))
 				.collect(Collectors.toList());
 
 		contractsFiltered.forEach(contract -> {
@@ -351,9 +356,6 @@ public class BillServiceImpl implements BillService {
 		for (Contract contract : filteredContracts) {
 			LinkedHashMap<Long, Long[]> invoiceDetailMap = new LinkedHashMap<>();
 			PaymentType tempPlan = contract.getPaymentPlan();
-			if (tempPlan == null) {
-				System.out.println("Stop" + contract.getContractId());
-			}
 			Date contractDate = contract.getContractDate();
 
 			List<Contract> tempContracts = contractConsumers.stream()
@@ -373,8 +375,9 @@ public class BillServiceImpl implements BillService {
 					Calendar calendar = Calendar.getInstance();
 					Calendar dinamycCalendar = Calendar.getInstance();
 					calendar.set(year.intValue(), month.intValue() - 1, 1, 0, 0, 0);
-					dinamycCalendar.set(contractDate.getYear() + 1900, contractDate.getMonth(), contractDate.getDate(), 23, 59, 59);
-					//int lastDayOfMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
+					dinamycCalendar.set(contractDate.getYear() + 1900, contractDate.getMonth(), contractDate.getDate(),
+							23, 59, 59);
+					// int lastDayOfMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
 					// Calcula vencimiento de la anualidad
 					if (calendar.get(Calendar.YEAR) > dinamycCalendar.get(Calendar.YEAR)) {
 						if (calendar.get(Calendar.MONTH) <= dinamycCalendar.get(Calendar.MONTH)) {
@@ -393,20 +396,22 @@ public class BillServiceImpl implements BillService {
 					// aplica, generar cobro
 					if (chargeSubscription) {
 						calendar.set(year.intValue(), month.intValue() - 1, dinamycCalendar.get(Calendar.DATE));
-						//calendar.add(Calendar.DATE, -1);
+						// calendar.add(Calendar.DATE, -1);
 					} else {
-						//calendar.set(year.intValue(), month.intValue() - 1, lastDayOfMonth);
+						// calendar.set(year.intValue(), month.intValue() - 1, lastDayOfMonth);
 						calendar.set(year.intValue(), month.intValue(), 1);
 					}
-					
+
 					for (Long branchId : tempBranches) {
 						issuedInvoices += invoiceRepository.getIssuedInvoicesDuringContract(branchId,
 								dinamycCalendar.getTime(), calendar.getTime());
 					}
 					// Calcular las facturas emitidas del mes anterior
 
-					/*calendar.add(Calendar.MONTH, -1);
-					calendar.set(Calendar.DATE, calendar.getActualMaximum(Calendar.DAY_OF_MONTH));*/
+					/*
+					 * calendar.add(Calendar.MONTH, -1); calendar.set(Calendar.DATE,
+					 * calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
+					 */
 					calendar.set(year.intValue(), month.intValue() - 1, 1);
 
 					Long issuedDocsLastMonth = 0L;
@@ -441,6 +446,7 @@ public class BillServiceImpl implements BillService {
 			LinkedHashMap<Long, Long[]> invoiceDetailMap,
 			LinkedHashMap<Long, LinkedHashMap<Long, Long[]>> invoiceDetailFullMap, Boolean update) {
 		Date contractDate = contract.getContractDate();
+
 		// Cobro de implementacion pendiente
 		if (contract.getImplementationAlreadyPaid() == false) {
 			Long[] valueXQuantity = { 1L, contract.getImplementationCost() };
@@ -505,6 +511,7 @@ public class BillServiceImpl implements BillService {
 			bill.setBranch(branchRepository.findByBranchId(invoiceDetailMap.getKey()));
 			bill.setDescription(generateInvoiceDescription(year, month, tempContract, invoiceDetailMap.getValue()));
 			Double ponderedIpc = this.calculateIpcIncrease(tempContract, year);
+			Double ipcUntilLastYear = this.calculateIpcIncrease(tempContract, year - 1);
 			if (save) {
 				try {
 					billRepository.save(bill);
@@ -523,10 +530,12 @@ public class BillServiceImpl implements BillService {
 				for (Map.Entry<Long, Long[]> concept : invoiceDetailMap.getValue().entrySet()) {
 					billProduct = new BillProduct();
 					billProduct.setBill(bill);
-					billProduct.setProduct(productRepository.getById(concept.getKey()));
+					billProduct.setProduct(productRepository.findByProductId(concept.getKey()));
 					billProduct.setQuantity(concept.getValue()[0].longValue());
 					billProduct.setPrice(concept.getKey() == 190L ? concept.getValue()[1]
-							: new Double(concept.getValue()[1] * ponderedIpc).longValue());
+							: concept.getKey() == 200L
+									? new Double(concept.getValue()[1] * ipcUntilLastYear).longValue()
+									: new Double(concept.getValue()[1] * ponderedIpc).longValue());
 					try {
 						billProductRepository.save(billProduct);
 					} catch (Exception e) {
@@ -540,7 +549,9 @@ public class BillServiceImpl implements BillService {
 					billProduct.setProduct(productRepository.findByProductId(concept.getKey()));
 					billProduct.setQuantity(concept.getValue()[0].longValue());
 					billProduct.setPrice(concept.getKey() == 190L ? concept.getValue()[1]
-							: new Double(concept.getValue()[1] * ponderedIpc).longValue());
+							: concept.getKey() == 200L
+									? new Double(concept.getValue()[1] * ipcUntilLastYear).longValue()
+									: new Double(concept.getValue()[1] * ponderedIpc).longValue());
 					try {
 						tempBillProducts.add(billProduct);
 					} catch (Exception e) {
@@ -551,9 +562,9 @@ public class BillServiceImpl implements BillService {
 			}
 		}
 	}
-	
+
 	public LinkedHashMap<Long, Long[]> cleanDetailMap(LinkedHashMap<Long, Long[]> invoiceDetailMap) {
-		List<Long> keysToRemove = new ArrayList<>();  
+		List<Long> keysToRemove = new ArrayList<>();
 		invoiceDetailMap.forEach((k, v) -> {
 			if (v[0] == 0) {
 				keysToRemove.add(k);
@@ -574,7 +585,7 @@ public class BillServiceImpl implements BillService {
 		cleanDetailMap(invoiceDetailMap);
 		Set<Long> keys = invoiceDetailMap.keySet();
 		Double ponderedIpc = this.calculateIpcIncrease(contract, year);
-		
+
 		if (keys.contains(192L)) {
 			description = generateBaseDescription(year, month, 192L, contract)
 					+ tempPlan.getGenerateAdjustedPlanDescription(ponderedIpc) + ". ";
@@ -628,11 +639,11 @@ public class BillServiceImpl implements BillService {
 
 	public String generateBaseDescription(Long year, Long month, Long product, Contract contract) {
 		String monthString = getMonthFromNumber(month);
-		String branchName = contract.getBranch().getName();
+		String branchName = contract.getBranch().getCode() + " - " + contract.getBranch().getName();
 		String description = "";
 		switch (product.intValue()) {
 		case 190:
-			description = "Cobro de implementación Facturación electrónica sucursal " + branchName + ". ";
+			description = "Cobro de implementación Facturación electrónica sucursal \"" + branchName + "\". ";
 			break;
 		case 191:
 		case 192:
@@ -642,11 +653,12 @@ public class BillServiceImpl implements BillService {
 			description = "Facturación anual a partir de " + monthString + " " + year + " Facturación electrónica. ";
 			break;
 		case 196:
-			description = "Cobro mantenimiento Facturacion Electronica entre " + monthString + "-" + year + " y "
-					+ monthString + "-" + (year + 1) + " sucursal " + branchName + ". ";
+			description = "Cobro mantenimiento Facturación Electrónica entre " + monthString + "-" + year + " y "
+					+ monthString + "-" + (year + 1) + " sucursal \"" + branchName + "\". ";
 			break;
 		case 200:
-			description = "Cobro mantenimiento Facturacion Electronica periodos anteriores vencidos sucursal " + branchName + ". ";
+			description = "Cobro mantenimiento Facturación Electrónica periodos anteriores vencidos sucursal \""
+					+ branchName + "\". ";
 			break;
 		default:
 		}
@@ -709,7 +721,7 @@ public class BillServiceImpl implements BillService {
 					row.setClTipoRegimen(contract.getBranch().getClient().getTipoRegimen());
 					row.setClNombreComercial(branch.getClient().getRazonSocial());
 					row.setClCodigoDepMunicipio(
-							branch.getState().toString().length() == 4 ? "0" + branch.getState().toString().length()
+							branch.getState().toString().length() == 4 ? "0" + branch.getState().toString()
 									: branch.getState().toString());
 					row.setClCodigoPostal(branch.getClient().getZonaPostal());
 					row.setClDireccion(branch.getAddress());
@@ -717,14 +729,14 @@ public class BillServiceImpl implements BillService {
 					row.setClTipoIdAdquiriente(contract.getBranch().getClient().getTipoIdentificacion());
 					row.setClNumeroIdAdquiriente(branch.getClient().getNit());
 					row.setClCodigoMunicipio(
-							branch.getState().toString().length() == 4 ? "0" + branch.getState().toString().length()
+							branch.getState().toString().length() == 4 ? "0" + branch.getState().toString()
 									: branch.getState().toString());
 					row.setClCodigoPostal2(branch.getClient().getZonaPostal());
 					row.setClDireccion2(branch.getAddress());
 					row.setClTelefono(branch.getPhone());
 					row.setClCelular(branch.getPhone());
 					row.setClCorreo(branch.getClient().getCorreoElectronico()
-							+ ",facelectronica_cnt@jaimetorres.net,profesional_cnt@jaimetorres.net");
+							+ ", facelectronica_cnt@jaimetorres.net, profesional_cnt@jaimetorres.net");
 					row.setPrCodigoProducto(billProduct.getProduct().getProductId() == 200L ? 196L
 							: billProduct.getProduct().getProductId());
 					row.setPrDescripcion(
@@ -771,7 +783,7 @@ public class BillServiceImpl implements BillService {
 				row.setClTelefono(billProduct.getBill().getBranch().getPhone());
 				row.setClCelular(billProduct.getBill().getBranch().getPhone());
 				row.setClCorreo(billProduct.getBill().getBranch().getClient().getCorreoElectronico()
-						+ ",facelectronica_cnt@jaimetorres.net,profesional_cnt@jaimetorres.net");
+						+ ", facelectronica_cnt@jaimetorres.net, profesional_cnt@jaimetorres.net");
 				row.setPrCodigoProducto(billProduct.getProduct().getProductId() == 200L ? 196L
 						: billProduct.getProduct().getProductId());
 				row.setPrDescripcion(
@@ -803,7 +815,7 @@ public class BillServiceImpl implements BillService {
 				for (BillProduct billProduct : billProducts) {
 					if (lastEvaluatedInvoice == billProduct.getBill().getBillId()) {
 						if (!(billProduct.getPrice() == 0 || billProduct.getQuantity() == 0)) {
-							itemIndex++;							
+							itemIndex++;
 						}
 					} else {
 						lastEvaluatedInvoice = billProduct.getBill().getBillId();
@@ -830,22 +842,23 @@ public class BillServiceImpl implements BillService {
 					if (!(row.getCInvoiceLinePriceEntered() == 0 || row.getCInvoiceLineQtyEntered() == 0)) {
 						rowLines.add(row.toString());
 					}
-				};
+				}
+				;
 			});
 		} else {
 			Long lastEvaluatedInvoice = 0L;
 			Integer itemIndex = 1;
 			for (BillProduct billProduct : this.tempBillProducts) {
-				if (lastEvaluatedInvoice == billProduct.getBill().getBillId()) {
+				if (lastEvaluatedInvoice == billProduct.getBill().getBillNumber()) {
 					if (!(billProduct.getPrice() == 0 || billProduct.getQuantity() == 0)) {
-						itemIndex++;							
+						itemIndex++;
 					}
 				} else {
-					lastEvaluatedInvoice = billProduct.getBill().getBillId();
+					lastEvaluatedInvoice = billProduct.getBill().getBillNumber();
 					itemIndex = 1;
 				}
 				SmartReportRow row = new SmartReportRow();
-				row.setDocumentNo(billProduct.getBill().getBillId());
+				row.setDocumentNo(billProduct.getBill().getBillNumber());
 				row.setDescription(billProduct.getBill().getDescription().split("\\.")[0] + ".");
 				row.setDateInvoiced(billProduct.getBill().getCreationDate());
 				row.setDateAcct(billProduct.getBill().getCreationDate());
@@ -856,8 +869,7 @@ public class BillServiceImpl implements BillService {
 				row.setCInvoiceLineMProductId(billProduct.getProduct().getProductId() == 200L ? 196L
 						: billProduct.getProduct().getProductId());
 				row.setCInvoiceLineDescription(row.getDescription() + " "
-						+ (billProduct.getProduct().getProductId() == 200L
-								? "SOPORTE Y MANTENIMIENTO ANUAL  FACELDI"
+						+ (billProduct.getProduct().getProductId() == 200L ? "SOPORTE Y MANTENIMIENTO ANUAL  FACELDI"
 								: billProduct.getProduct().getDescription()));
 				row.setCInvoiceLineQtyEntered(billProduct.getQuantity());
 				row.setCInvoiceLinePriceEntered(billProduct.getPrice());
@@ -865,7 +877,7 @@ public class BillServiceImpl implements BillService {
 				if (!(row.getCInvoiceLinePriceEntered() == 0 || row.getCInvoiceLineQtyEntered() == 0)) {
 					rowLines.add(row.toString());
 				}
-			};
+			}
 		}
 		return rowLines.toArray();
 	}
