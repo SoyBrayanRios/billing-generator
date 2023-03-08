@@ -33,6 +33,10 @@ public class Alliance {
 	private Long allianceId;
 	@Column(name = "alliance_name")
 	private String name;
+	@Column(name = "smart_cc")
+	private Long smartCC;
+	@Column(name = "smart_cc_name")
+	private String ccName;
 	@JsonIgnore
 	@OneToMany(cascade = CascadeType.ALL, mappedBy = "alliance")
 	private Set<Client> clients;

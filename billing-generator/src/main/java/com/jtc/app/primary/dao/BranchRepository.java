@@ -16,9 +16,9 @@ public interface BranchRepository extends JpaRepository<Branch, Long> {
 	public Branch findByClientId(String clientId);
 	
 	@Query(value = "select b.branch_id, b.\"active\", b.codigo, b.branch_name, b.country, b.department, b.department_name, "
-			+ "b.state, b.state_name, b.center, b.address, b.address_complement, b.phone, b.email, b.client_id "
+			+ "b.state, b.state_name, b.center, b.address, b.address_complement, b.phone, b.email, b.client_id, b.ds, b.fe, b.ne "
 			+ "from branch b\n"
-			+ "left join contract co on co.branch_id = b.branch_id\n"
+			+ "left join contract_fe co on co.branch_id = b.branch_id\n"
 			+ "where co.branch_id isnull and b.active", nativeQuery = true)
 	public List<Branch> findBranchesWithoutContract();
 	

@@ -1,29 +1,28 @@
-package com.jtc.app.primary.entity;
+package com.jtc.app.model;
 
 import java.util.Date;
 
 import javax.persistence.Column;
-import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.MappedSuperclass;
+
+import com.jtc.app.primary.entity.Branch;
+import com.jtc.app.primary.entity.PaymentType;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 
-@Entity
-@Table(name = "contract")
+@MappedSuperclass
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
-@ToString
-public class Contract {
-
+public class BaseContract {
+	
 	@Id
 	@Column(name = "contract_id")
 	private String contractId;
@@ -31,12 +30,8 @@ public class Contract {
 	private Date contractDate;
 	@Column(name = "created_by")
 	private String createdBy;
-	@Column(name = "implementation_cost")
-	private Long implementationCost;
 	@Column(name = "shared_contract")
 	private Boolean sharedContract;
-	@Column(name = "shared_maintenance")
-	private Boolean sharedMaintenance;
 	@Column(name = "shared_contract_id")
 	private String sharedContractId;
 	@Column(name = "ipc_increase")
@@ -45,21 +40,10 @@ public class Contract {
 	private Date firstIssueDate;
 	@Column(name = "prepaid")
 	private Boolean prepaid;
-	@Column(name = "implementation_already_paid")
-	private Boolean implementationAlreadyPaid;
-	@Column(name = "maintenance_already_paid")
-	private Boolean maintenanceAlreadyPaid;
 	@ManyToOne
 	@JoinColumn(name = "payment_plan", nullable = true)
 	private PaymentType paymentPlan;
 	@ManyToOne
-	@JoinColumn(name = "maintenance_id", nullable = true)
-	private Maintenance maintenanceType;
-	@ManyToOne
-	@JoinColumn(name = "custody_id", nullable = true)
-	private Custody custodyType;
-	@ManyToOne
 	@JoinColumn(name = "branch_id", nullable = false)
 	private Branch branch;
-
 }

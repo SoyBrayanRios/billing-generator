@@ -9,7 +9,7 @@ public interface PaymentTypeService {
 
 	public PaymentType savePaymentType(PaymentType paymentType) throws Exception;
 	public PaymentType getPaymentTypeByParams(Integer discriminatorType, String costRange, String packageName, Integer documentQuantity, 
-			Long packagePrice, Long docPrice, Frequency paymentFrequencyId, String modulePlan);
+			Long packagePrice, Long docPrice, Frequency paymentFrequencyId, String modulePlan, Boolean mixedContract, Boolean selfAdjusting);
 	public List<PaymentType> getPaymentTypes();
 	public PaymentType findByPackageId(Long packageId);
 	

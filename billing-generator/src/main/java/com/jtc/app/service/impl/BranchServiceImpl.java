@@ -62,7 +62,102 @@ public class BranchServiceImpl implements BranchService {
 
 	@Override
 	public List<Branch> updateAllBranches() {
-		List<FETransmitter> feTransmitters = feTransmitterRepository.getActiveTransmitters();
+		updateFeBranches();
+		//updateDsBranches();
+		return branchRepository.findAll();
+	}
+	
+	public void updateFeBranches() {
+		List<FETransmitter> feTransmitters = feTransmitterRepository.getActiveFeTransmitters();
+		feTransmitters.forEach(transmitter -> {
+			Branch tempBranch = branchRepository.findByBranchId(transmitter.getIdSucursal());
+			if (tempBranch == null) {
+				tempBranch = new Branch();
+				tempBranch.setBranchId(transmitter.getIdSucursal());
+				tempBranch.setActive(true);
+				tempBranch.setCode(transmitter.getCodigo());
+				tempBranch.setName(transmitter.getNombre());
+				tempBranch.setCountry(transmitter.getPais());
+				tempBranch.setDepartment(transmitter.getDepartamento());
+				tempBranch.setDepartmentName(transmitter.getNombreDepartamento());
+				tempBranch.setState(transmitter.getMunicipio());
+				tempBranch.setStateName(transmitter.getNombreMunicipio());
+				tempBranch.setCenter(transmitter.getCentro());
+				tempBranch.setAddress(transmitter.getDireccion());
+				tempBranch.setAddressComplement(transmitter.getComplementoDireccion());
+				tempBranch.setPhone(transmitter.getTelefono());
+				tempBranch.setEmail(transmitter.getCorreoElectronico());
+				tempBranch.setClient(clientRepository.findByNit(transmitter.getNroIdentificacion()));
+				tempBranch.setFE(true);
+				try {
+					branchRepository.save(tempBranch);
+					System.out.println("Se guardó con éxito la sucursal " + tempBranch.getBranchId());
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			} else {
+				if (!tempBranch.getFE()) {
+					tempBranch.setFE(true);
+					try {
+						branchRepository.save(tempBranch);
+						System.out.println("Se actualizó con éxito la sucursal " + tempBranch.getBranchId());
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				} else {
+					System.out.println("La sucursal " + tempBranch.getBranchId() + " ya existe para FE");					
+				}
+			}
+		});
+	}
+	
+	public void updateDsBranches() {
+		List<FETransmitter> feTransmitters = feTransmitterRepository.getActiveDsTransmitters();
+		feTransmitters.forEach(transmitter -> {
+			Branch tempBranch = branchRepository.findByBranchId(transmitter.getIdSucursal());
+			if (tempBranch == null) {
+				tempBranch = new Branch();
+				tempBranch.setBranchId(transmitter.getIdSucursal());
+				tempBranch.setActive(true);
+				tempBranch.setCode(transmitter.getCodigo());
+				tempBranch.setName(transmitter.getNombre());
+				tempBranch.setCountry(transmitter.getPais());
+				tempBranch.setDepartment(transmitter.getDepartamento());
+				tempBranch.setDepartmentName(transmitter.getNombreDepartamento());
+				tempBranch.setState(transmitter.getMunicipio());
+				tempBranch.setStateName(transmitter.getNombreMunicipio());
+				tempBranch.setCenter(transmitter.getCentro());
+				tempBranch.setAddress(transmitter.getDireccion());
+				tempBranch.setAddressComplement(transmitter.getComplementoDireccion());
+				tempBranch.setPhone(transmitter.getTelefono());
+				tempBranch.setEmail(transmitter.getCorreoElectronico());
+				tempBranch.setClient(clientRepository.findByNit(transmitter.getNroIdentificacion()));
+				tempBranch.setDS(true);
+				try {
+					branchRepository.save(tempBranch);
+					System.out.println("Se guardó con éxito la sucursal " + tempBranch.getBranchId());
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			} else {
+				if (!tempBranch.getDS()) {
+					tempBranch.setDS(true);
+					try {
+						branchRepository.save(tempBranch);
+						System.out.println("Se actualizó con éxito la sucursal " + tempBranch.getBranchId());
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				} else {
+					System.out.println("La sucursal " + tempBranch.getBranchId() + " ya existe para DS");					
+				}
+			}
+		});
+	}
+	
+	//TODO
+	public void updateNeBranches() {
+		List<FETransmitter> feTransmitters = feTransmitterRepository.getActiveFeTransmitters();
 		feTransmitters.forEach(transmitter -> {
 			Branch tempBranch = branchRepository.findByBranchId(transmitter.getIdSucursal());
 			if (tempBranch == null) {
@@ -84,7 +179,7 @@ public class BranchServiceImpl implements BranchService {
 				tempBranch.setClient(clientRepository.findByNit(transmitter.getNroIdentificacion()));
 				try {
 					branchRepository.save(tempBranch);
-					System.out.println("Se guardó con exito la sucursal " + tempBranch.getBranchId());
+					System.out.println("Se guardó con éxito la sucursal " + tempBranch.getBranchId());
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -92,7 +187,6 @@ public class BranchServiceImpl implements BranchService {
 				System.out.println("La sucursal " + tempBranch.getBranchId() + " ya existe ");
 			}
 		});
-		return branchRepository.findAll();
 	}
 
 }

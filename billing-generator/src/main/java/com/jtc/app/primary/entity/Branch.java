@@ -54,14 +54,26 @@ public class Branch {
 	private String phone;
 	@Column(name = "email")
 	private String email;
-	@Column(name = "active", insertable = true, updatable = true)
+	@Column(name = "active", columnDefinition = "boolean default true")
 	private Boolean active;
+	@Column(name = "ds")
+	private Boolean dS = false;
+	@Column(name = "fe")
+	private Boolean fE = false;
+	@Column(name = "ne")
+	private Boolean nE = false;
 	@ManyToOne
 	@JoinColumn(name = "client_id", nullable = false)
 	private Client client;
 	@JsonIgnore
-	@OneToMany(cascade = CascadeType.ALL, mappedBy = "branch")
-	private Set<Contract> contracts;
+	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "branch")
+	private Set<ContractFE> contractsFe;
+	@JsonIgnore
+	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "branch")
+	private Set<ContractNE> contractsNe;
+	@JsonIgnore
+	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "branch")
+	private Set<ContractDS> contractsDs;
 	@JsonIgnore
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "branch")
 	private Set<InvoiceResume> invoicesQuantity;

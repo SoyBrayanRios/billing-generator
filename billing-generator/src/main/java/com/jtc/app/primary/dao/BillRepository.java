@@ -9,7 +9,7 @@ import com.jtc.app.primary.entity.Bill;
 
 public interface BillRepository extends JpaRepository<Bill, Long> {
 
-	@Query(value = "select * from bill where \"year\"=:year and \"month\"=:month ", nativeQuery = true)
+	@Query(value = "select * from bill where \"year\"=:year and \"month\"=:month order by bill_id asc", nativeQuery = true)
 	public List<Bill> getFaceldiReport(Long year, Long month);
 	
 }

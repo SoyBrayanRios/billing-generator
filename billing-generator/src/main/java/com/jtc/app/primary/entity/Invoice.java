@@ -32,8 +32,8 @@ public class Invoice {
 	private Long invoiceId;
 	@Column(name = "invoice_number")
 	private String invoiceNumber;
-	//@Column(name = "buyer_id")
-	//private Long buyerId;
+	@Column(name = "document_type")
+	private String documentType;
 	@JsonIgnore
 	@ManyToOne
 	@JoinColumn(name = "branch_id", nullable = false)

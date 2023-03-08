@@ -27,7 +27,7 @@ public class FETransmitterServiceImpl implements FETransmitterService{
 
 	@Override
 	public List<FETransmitter> getFEActiveTransmitters() {
-		return feTransmitterRepository.getActiveTransmitters();
+		return feTransmitterRepository.getActiveFeTransmitters();
 	}
 	
 }

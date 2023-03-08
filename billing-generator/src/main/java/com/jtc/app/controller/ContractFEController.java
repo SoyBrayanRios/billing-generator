@@ -11,42 +11,42 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.jtc.app.primary.entity.Contract;
-import com.jtc.app.service.ContractService;
+import com.jtc.app.primary.entity.ContractFE;
+import com.jtc.app.service.ContractFEService;
 
 @RestController
 @CrossOrigin("*")
 @RequestMapping("/api/contract")
-public class ContractController {
+public class ContractFEController {
 
 	@Autowired
-	private ContractService contractService;
+	private ContractFEService contractFeService;
 
 	@PostMapping("/")
-	public Contract saveContract(@RequestBody Contract contract) throws Exception{
-		return contractService.saveContract(contract);
+	public ContractFE saveContract(@RequestBody ContractFE contract) throws Exception{
+		return contractFeService.saveContract(contract);
 	}
 	
 	@GetMapping("/all")
-	public List<Contract> getContracts() {
-		return contractService.getContracts();
+	public List<ContractFE> getContracts() {
+		return contractFeService.getContracts();
 	}
 	
 	@GetMapping("/{contractId}")
-	public Contract getContractById(@PathVariable(name = "contractId") String contractId) {
-		return contractService.getContractById(contractId);
+	public ContractFE getContractById(@PathVariable(name = "contractId") String contractId) {
+		return contractFeService.getContractById(contractId);
 	}
 	
-	public Contract getContractByBranch(Long branchId) {
-		return contractService.getContractByBranch(branchId);
+	public ContractFE getContractByBranch(Long branchId) {
+		return contractFeService.getContractByBranch(branchId);
 	}
 	
 	public void deleteContract(String contractId) {
-		contractService.deleteContract(contractId);
+		contractFeService.deleteContract(contractId);
 	}
 	
 	public List<String> getSharedContracts() {
-		return contractService.getSharedContracts();
+		return contractFeService.getSharedContracts();
 	}
 	
 }

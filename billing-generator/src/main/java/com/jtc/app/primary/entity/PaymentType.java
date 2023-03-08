@@ -69,7 +69,7 @@ public class PaymentType {
 	private Boolean mixedContract;
 	@JsonIgnore
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "paymentPlan")
-	private Set<Contract> contracts;
+	private Set<ContractFE> contracts;
 	
 	public LinkedHashMap<Long, Long[]> getBillDetail(Long docQuantity) {
 		Long[] valQuant = new Long[2];
@@ -120,7 +120,7 @@ public class PaymentType {
 		}
 	}
 	
-	public LinkedHashMap<Long, Long[]> getAnnualBillDetail(Long issuedDocQuantity, Long issuedDocsLastMonth, boolean annualCharge) {
+	public LinkedHashMap<Long, Long[]> getAnnualBillDetail(Long issuedDocQuantity, Long issuedDocsLastMonth, boolean annualCharge, boolean reFillPlan) {
 		int limit = 0;
 		LinkedHashMap<Long, Long[]> invoiceDetailMap = new LinkedHashMap<>();
 		if (this.packageName == null) {
@@ -129,16 +129,18 @@ public class PaymentType {
 			limit = getDocumentQuantityByPackageName(this.packageName);
 		}
 		
-		if (issuedDocsLastMonth > limit) {
-			Long[] valQuant = new Long[2];
-			valQuant[0] = issuedDocQuantity - issuedDocsLastMonth;
-			valQuant[1] = this.documentPrice;
-			invoiceDetailMap.put(Long.parseLong(CONCEPTS[1][0]), valQuant);
-		} else if (issuedDocQuantity > limit){
-			Long[] valQuant = new Long[2];
-			valQuant[0] = issuedDocQuantity - limit;
-			valQuant[1] = this.documentPrice;
-			invoiceDetailMap.put(Long.parseLong(CONCEPTS[1][0]), valQuant);
+		if (!reFillPlan) {
+			if (issuedDocsLastMonth > limit) {
+				Long[] valQuant = new Long[2];
+				valQuant[0] = issuedDocQuantity - issuedDocsLastMonth;
+				valQuant[1] = this.documentPrice;
+				invoiceDetailMap.put(Long.parseLong(CONCEPTS[1][0]), valQuant);
+			} else if (issuedDocQuantity > limit){
+				Long[] valQuant = new Long[2];
+				valQuant[0] = issuedDocQuantity - limit;
+				valQuant[1] = this.documentPrice;
+				invoiceDetailMap.put(Long.parseLong(CONCEPTS[1][0]), valQuant);
+			}			
 		}
 		
 		if (annualCharge) {

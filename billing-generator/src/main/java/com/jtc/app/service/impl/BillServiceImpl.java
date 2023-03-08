@@ -18,16 +18,17 @@ import org.springframework.transaction.annotation.Transactional;
 import com.jtc.app.primary.dao.BillProductRepository;
 import com.jtc.app.primary.dao.BillRepository;
 import com.jtc.app.primary.dao.BranchRepository;
-import com.jtc.app.primary.dao.ContractRepository;
+import com.jtc.app.primary.dao.ContractFERepository;
 import com.jtc.app.primary.dao.InvoiceRepository;
 import com.jtc.app.primary.dao.InvoiceResumeRepository;
 import com.jtc.app.primary.dao.PaymentTypeRepository;
 import com.jtc.app.primary.dao.ProductRepository;
+import com.jtc.app.primary.entity.Alliance;
 import com.jtc.app.primary.entity.Bill;
 import com.jtc.app.primary.entity.BillDetail;
 import com.jtc.app.primary.entity.BillProduct;
 import com.jtc.app.primary.entity.Branch;
-import com.jtc.app.primary.entity.Contract;
+import com.jtc.app.primary.entity.ContractFE;
 import com.jtc.app.primary.entity.FaceldiReportRow;
 import com.jtc.app.primary.entity.InvoiceResume;
 import com.jtc.app.primary.entity.JsonResponse;
@@ -46,7 +47,7 @@ public class BillServiceImpl implements BillService {
 	@Autowired
 	private InvoiceResumeRepository invoiceResumeRepository;
 	@Autowired
-	private ContractRepository contractRepository;
+	private ContractFERepository contractFeRepository;
 	@Autowired
 	private ProductRepository productRepository;
 	@Autowired
@@ -65,7 +66,7 @@ public class BillServiceImpl implements BillService {
 	private Double[][] ipcList = { { 2018.0, 0.0 }, { 2019.0, 0.0380 }, { 2020.0, 0.0161 }, { 2021.0, 0.0562 },
 			{ 2022.0, 0.1312 }, { 2023.0, 0.0 } };
 
-	public Double calculateIpcIncrease(Contract contract, Long billingYear) {
+	public Double calculateIpcIncrease(ContractFE contract, Long billingYear) {
 		Double increase = 1.0;
 		if (contract.getIpcIncrease()) {
 			int contractYear = contract.getContractDate().getYear() + 1900;
@@ -175,10 +176,11 @@ public class BillServiceImpl implements BillService {
 
 	public void adjustContracts(Long year, Long month) {
 		System.out.println("Running adjustContracts");
-		List<Contract> contracts = contractRepository.findAll().stream()
+		List<ContractFE> contracts = contractFeRepository.findAll().stream()
 				.filter(contract -> !contract.getSharedContract() && contract.getPaymentPlan().getSelfAdjusting())
 				.collect(Collectors.toList());
 		contracts.forEach(contract -> {
+			System.out.println(contract.getContractId());
 			PaymentType tempPlan = contract.getPaymentPlan();
 			InvoiceResume tempResume = invoiceResumeRepository.findByBranchYearMonth(contract.getBranch().getBranchId(),
 					year, month);
@@ -195,13 +197,13 @@ public class BillServiceImpl implements BillService {
 					} else if (newPlanName.equalsIgnoreCase("Plan L")) {
 						contract.setPaymentPlan(paymentTypeRepository.findByPackageId(15L));
 					}
-					contractRepository.save(contract);
+					contractFeRepository.save(contract);
 					break;
 				case "Plan M":
 					if (newPlanName.equalsIgnoreCase("Plan L")) {
 						contract.setPaymentPlan(paymentTypeRepository.findByPackageId(15L));
 					}
-					contractRepository.save(contract);
+					contractFeRepository.save(contract);
 					break;
 				// case "Plan L": When clients are in higher plans it cannot be a downgrade
 				default:
@@ -215,12 +217,12 @@ public class BillServiceImpl implements BillService {
 			Boolean update) {
 		System.out.println("Running getBillsToCollectByMonthlyIssuedInvoices");
 		// Obtener los contratos compartidos
-		List<String> sharedContractsFilter = contractRepository.getSharedContracts();
+		List<String> sharedContractsFilter = contractFeRepository.getSharedContracts();
 		// Obtener los contratos de esas sucursales
 		for (InvoiceResume resume : resumes) {
 			LinkedHashMap<Long, Long[]> invoiceDetailMap = new LinkedHashMap<>();
 			// Calcular el costo
-			Contract contract = contractRepository.findByBranchId(resume.getBranch().getBranchId());
+			ContractFE contract = contractFeRepository.findByBranchId(resume.getBranch().getBranchId());
 
 			if (contract != null) {
 				// System.out.println(contract.getContractId());
@@ -229,7 +231,7 @@ public class BillServiceImpl implements BillService {
 				if (skip == false) {
 					// ---------------------------------------
 					PaymentType tempPlan = contract.getPaymentPlan();
-					Date contractDate = contract.getContractDate();
+					Date contractDate = contract.getReferencePaymentDate();
 					if (!contract.getSharedContract()) {
 						if (tempPlan.getDiscriminatorType() == 1
 								&& tempPlan.getPaymentFrequency().getFrequencyId() == 8) {
@@ -272,21 +274,62 @@ public class BillServiceImpl implements BillService {
 							 * calendar.add(Calendar.MONTH, -1); calendar.set(Calendar.DATE,
 							 * calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
 							 */
-							calendar.set(year.intValue(), month.intValue() - 1, 1);
 
+							Boolean refill = false;
+							if (issuedDocs > tempPlan.getDocumentQuantity()) {
+								//Validate if it is a Centsys' company to refill the contract
+								Alliance alliance = contract.getBranch().getClient().getAlliance();
+								if (alliance != null) {
+									Long allianceId = alliance.getAllianceId();
+									if (allianceId == 4L) {
+										refill = true;
+										chargeSubscription = true;
+										
+										//------------------------------------------------------
+										Calendar endReferenceCalendar = Calendar.getInstance();
+										endReferenceCalendar.setTime(calendar.getTime());
+										endReferenceCalendar.add(Calendar.DATE, -1);
+										Calendar startReferenceCalendar = Calendar.getInstance();
+										startReferenceCalendar.setTime(calendar.getTime());
+										startReferenceCalendar.set(Calendar.DATE, 1);
+										
+										for (Date date = startReferenceCalendar.getTime(); 
+												startReferenceCalendar.before(endReferenceCalendar);
+												startReferenceCalendar.add(Calendar.DATE, 1), date = startReferenceCalendar.getTime()) {
+										    System.out.println(date);
+										    Long tempDocsCount = invoiceRepository.getIssuedInvoicesDuringContract(
+													resume.getBranch().getBranchId(), dinamycCalendar.getTime(), startReferenceCalendar.getTime());
+										    if (tempDocsCount > tempPlan.getDocumentQuantity()) {
+										    	System.out.println("Refill: " + contract.getContractId() + " - " 
+										    + tempDocsCount + " - " + startReferenceCalendar.getTime());
+										    	contract.setReferencePaymentDate(startReferenceCalendar.getTime());
+										    	endReferenceCalendar.setTime(startReferenceCalendar.getTime());
+										    }
+										}
+										//------------------------------------------------------
+									}
+								}
+								
+							}
+							calendar.set(year.intValue(), month.intValue() - 1, 1);
 							Long issuedDocsLastMonth = invoiceRepository.getIssuedInvoicesDuringContract(
 									resume.getBranch().getBranchId(), dinamycCalendar.getTime(), calendar.getTime());
-
-							if (issuedDocs > tempPlan.getDocumentQuantity()) {
-								invoiceDetailMap = tempPlan.getAnnualBillDetail(issuedDocs, issuedDocsLastMonth,
-										chargeSubscription);
-							}
+							
+							invoiceDetailMap = tempPlan.getAnnualBillDetail(issuedDocs, issuedDocsLastMonth,
+									chargeSubscription, refill);
 						} else {
 							invoiceDetailMap = tempPlan.getBillDetail(resume.getIssuedInvoices());
 						}
 					}
 					addMoreDetailsToPay(year, month, contract.getBranch().getBranchId(), contract, invoiceDetailMap,
 							invoiceDetailFullMap, update);
+					if (update) {
+						try {
+							contractFeRepository.save(contract);
+						} catch (Exception e) {
+							System.out.println("Hubo un error al actualizar el contrato " + contract.getContractId());
+						}						
+					}
 				} else {
 					System.out.println(
 							"La sucursal " + resume.getBranch().getBranchId() + " tiene un contrato compartido.");
@@ -301,12 +344,12 @@ public class BillServiceImpl implements BillService {
 			LinkedHashMap<Long, LinkedHashMap<Long, Long[]>> invoiceDetailFullMap, Boolean update) {
 		System.out.println("Running getBillsToCollectByOtherCharges");
 
-		List<Contract> contracts = contractRepository.findAll();
+		List<ContractFE> contracts = contractFeRepository.findAll();
 		Set<Long> keys = invoiceDetailFullMap.keySet();
 
-		List<String> sharedContractsFilter = contractRepository.getSharedContracts();
+		List<String> sharedContractsFilter = contractFeRepository.getSharedContracts();
 
-		List<Contract> contractsFiltered = contracts.stream()
+		List<ContractFE> contractsFiltered = contracts.stream()
 				.filter(c -> !keys.contains(c.getBranch().getBranchId()) && c.getBranch().getActive()
 						&& !c.getSharedMaintenance() && !sharedContractsFilter.contains(c.getContractId()))
 				.collect(Collectors.toList());
@@ -315,7 +358,7 @@ public class BillServiceImpl implements BillService {
 			LinkedHashMap<Long, Long[]> invoiceDetailMap = new LinkedHashMap<>();
 			if (!contract.getSharedContract()) {
 				Long[] valQuant = new Long[2];
-				Date contractDate = contract.getContractDate();
+				Date contractDate = contract.getReferencePaymentDate();
 				PaymentType tempPlan = contract.getPaymentPlan();
 				if (tempPlan.getDiscriminatorType() == 1) {
 					if (tempPlan.getPaymentFrequency().getFrequencyId() == 4) {
@@ -327,6 +370,20 @@ public class BillServiceImpl implements BillService {
 							valQuant[0] = 1L;
 							valQuant[1] = tempPlan.getPackagePrice();
 							invoiceDetailMap.put(194L, valQuant);
+							
+							//--Fix date
+							Calendar calendar = Calendar.getInstance();
+							calendar.set(year.intValue(), month.intValue() - 1, contractDate.getDate());
+							contract.setReferencePaymentDate(calendar.getTime());
+							System.out.println("Anualidad " + contract.getContractId() + " - " + calendar.getTime());
+							
+							if (update) {
+								try {
+									contractFeRepository.save(contract);
+								} catch (Exception e) {
+									System.out.println("Hubo un error al actualizar el contrato " + contract.getContractId());
+								}
+							}
 						}
 					}
 				} else if (tempPlan.getDiscriminatorType() == 2 && tempPlan.getMixedContract()) {
@@ -345,20 +402,20 @@ public class BillServiceImpl implements BillService {
 			LinkedHashMap<Long, LinkedHashMap<Long, Long[]>> invoiceDetailFullMap, List<InvoiceResume> resumes,
 			Boolean update) {
 		System.out.println("Running getBillsToCollectDueSharedContracts");
-		List<Contract> contracts = contractRepository.findAll();
-		List<String> sharedContracts = contractRepository.getSharedContracts();
-		List<Contract> filteredContracts = contracts.stream()
+		List<ContractFE> contracts = contractFeRepository.findAll();
+		List<String> sharedContracts = contractFeRepository.getSharedContracts();
+		List<ContractFE> filteredContracts = contracts.stream()
 				.filter(contract -> sharedContracts.contains(contract.getContractId())).collect(Collectors.toList());
 
-		List<Contract> contractConsumers = contracts.stream().filter(contract -> contract.getSharedContract())
+		List<ContractFE> contractConsumers = contracts.stream().filter(contract -> contract.getSharedContract())
 				.collect(Collectors.toList());
 
-		for (Contract contract : filteredContracts) {
+		for (ContractFE contract : filteredContracts) {
 			LinkedHashMap<Long, Long[]> invoiceDetailMap = new LinkedHashMap<>();
 			PaymentType tempPlan = contract.getPaymentPlan();
-			Date contractDate = contract.getContractDate();
+			Date contractDate = contract.getReferencePaymentDate();
 
-			List<Contract> tempContracts = contractConsumers.stream()
+			List<ContractFE> tempContracts = contractConsumers.stream()
 					.filter(c -> c.getSharedContractId().equalsIgnoreCase(contract.getContractId()))
 					.collect(Collectors.toList());
 			if (tempContracts != null) {
@@ -412,18 +469,57 @@ public class BillServiceImpl implements BillService {
 					 * calendar.add(Calendar.MONTH, -1); calendar.set(Calendar.DATE,
 					 * calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
 					 */
-					calendar.set(year.intValue(), month.intValue() - 1, 1);
 
+					Boolean refill = false;
+					if (issuedInvoices > tempPlan.getDocumentQuantity()) {
+						//Validate if it is a Centsys' company to refill the contract
+						Alliance alliance = contract.getBranch().getClient().getAlliance();
+						if (alliance != null) {
+							Long allianceId = alliance.getAllianceId();
+							if (allianceId == 4L) {
+								refill = true;
+								chargeSubscription = true;
+								
+								//------------------------------------------------------
+								Calendar endReferenceCalendar = Calendar.getInstance();
+								endReferenceCalendar.setTime(calendar.getTime());
+								endReferenceCalendar.add(Calendar.DATE, -1);
+								Calendar startReferenceCalendar = Calendar.getInstance();
+								startReferenceCalendar.setTime(calendar.getTime());
+								startReferenceCalendar.set(Calendar.DATE, 1);
+								
+								for (Date date = startReferenceCalendar.getTime(); 
+										startReferenceCalendar.before(endReferenceCalendar);
+										startReferenceCalendar.add(Calendar.DATE, 1), date = startReferenceCalendar.getTime()) {
+								    System.out.println(date);
+								    Long tempDocsCount = 0L;
+								    for (Long branchId : tempBranches) {
+								    	tempDocsCount += invoiceRepository.getIssuedInvoicesDuringContract(branchId,
+												dinamycCalendar.getTime(), startReferenceCalendar.getTime());
+									}
+								    
+								    if (tempDocsCount > tempPlan.getDocumentQuantity()) {
+								    	System.out.println("Refill: " + contract.getContractId() + " - " 
+											    + tempDocsCount + " - " + startReferenceCalendar.getTime());
+								    	contract.setReferencePaymentDate(startReferenceCalendar.getTime());
+								    	endReferenceCalendar.setTime(startReferenceCalendar.getTime());
+								    }
+								}
+								//------------------------------------------------------
+							}
+						}
+						
+					}
+					calendar.set(year.intValue(), month.intValue() - 1, 1);
+					
 					Long issuedDocsLastMonth = 0L;
 					for (Long branchId : tempBranches) {
 						issuedDocsLastMonth += invoiceRepository.getIssuedInvoicesDuringContract(branchId,
 								dinamycCalendar.getTime(), calendar.getTime());
 					}
-
-					if (issuedInvoices > tempPlan.getDocumentQuantity()) {
-						invoiceDetailMap = tempPlan.getAnnualBillDetail(issuedInvoices, issuedDocsLastMonth,
-								chargeSubscription);
-					}
+					
+					invoiceDetailMap = tempPlan.getAnnualBillDetail(issuedInvoices, issuedDocsLastMonth,
+							chargeSubscription, refill);
 				} else {
 					// Sumar las emitidas de ese mes para cada una de las empresas que comparten el
 					// contrato
@@ -436,16 +532,32 @@ public class BillServiceImpl implements BillService {
 				}
 
 			}
+			
+			if (update) {
+				try {
+					contractFeRepository.save(contract);
+				} catch (Exception e) {
+					System.out.println("Hubo un error al actualizar el contrato " + contract.getContractId());
+				}
+			}
+			
 			addMoreDetailsToPay(year, month, contract.getBranch().getBranchId(), contract, invoiceDetailMap,
 					invoiceDetailFullMap, update);
 		}
 
 	}
 
-	public void addMoreDetailsToPay(Long year, Long month, Long branchId, Contract contract,
+	public void addMoreDetailsToPay(Long year, Long month, Long branchId, ContractFE contract,
 			LinkedHashMap<Long, Long[]> invoiceDetailMap,
 			LinkedHashMap<Long, LinkedHashMap<Long, Long[]>> invoiceDetailFullMap, Boolean update) {
+		Alliance alliance = contract.getBranch().getClient().getAlliance();
 		Date contractDate = contract.getContractDate();
+		
+		if (alliance != null) {
+			if (alliance.getAllianceId() == 4L) {
+				contractDate = Optional.ofNullable(contract.getFirstIssueDate()).orElse(contractDate);
+			}
+		}
 
 		// Cobro de implementacion pendiente
 		if (contract.getImplementationAlreadyPaid() == false) {
@@ -454,7 +566,7 @@ public class BillServiceImpl implements BillService {
 			contract.setImplementationAlreadyPaid(true);
 			if (update) {
 				try {
-					contractRepository.save(contract);
+					contractFeRepository.save(contract);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -477,7 +589,7 @@ public class BillServiceImpl implements BillService {
 				contract.setMaintenanceAlreadyPaid(true);
 				if (update) {
 					try {
-						contractRepository.save(contract);
+						contractFeRepository.save(contract);
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -496,69 +608,72 @@ public class BillServiceImpl implements BillService {
 		this.tempBillProducts = new ArrayList<>();
 		Calendar calendar = null;
 		Bill bill = null;
-		Contract tempContract = null;
+		ContractFE tempContract = null;
 		BillProduct billProduct = null;
 		for (Map.Entry<Long, LinkedHashMap<Long, Long[]>> invoiceDetailMap : invoiceDetailFullMap.entrySet()) {
 			calendar = Calendar.getInstance();
-			bill = new Bill();
-			tempContract = contractRepository.findByBranchId(invoiceDetailMap.getKey());
-			bill.setBillNumber(this.lastInvoiceNumber);
-			bill.setCreationDate(calendar.getTime());
-			calendar.add(Calendar.MONTH, 1);
-			bill.setExpirationDate(calendar.getTime());
-			bill.setYear(year);
-			bill.setMonth(month);
-			bill.setBranch(branchRepository.findByBranchId(invoiceDetailMap.getKey()));
-			bill.setDescription(generateInvoiceDescription(year, month, tempContract, invoiceDetailMap.getValue()));
-			Double ponderedIpc = this.calculateIpcIncrease(tempContract, year);
-			Double ipcUntilLastYear = this.calculateIpcIncrease(tempContract, year - 1);
-			if (save) {
-				try {
-					billRepository.save(bill);
-					System.out.println("Saved " + bill.getBillId() + ", " + bill.getDescription());
-					InvoiceResume row = invoiceResumeRepository.findByBranchYearMonth(invoiceDetailMap.getKey(), year,
-							month);
-					if (row != null) {
-						row.setBill(bill);
-						invoiceResumeRepository.save(row);
+			cleanDetailMap(invoiceDetailMap.getValue());
+			if (!invoiceDetailMap.getValue().isEmpty()) {
+				bill = new Bill();
+				tempContract = contractFeRepository.findByBranchId(invoiceDetailMap.getKey());
+				bill.setBillNumber(this.lastInvoiceNumber);
+				bill.setCreationDate(calendar.getTime());
+				calendar.add(Calendar.DATE, 30);
+				bill.setExpirationDate(calendar.getTime());
+				bill.setYear(year);
+				bill.setMonth(month);
+				bill.setBranch(branchRepository.findByBranchId(invoiceDetailMap.getKey()));
+				bill.setDescription(generateInvoiceDescription(year, month, tempContract, invoiceDetailMap.getValue()));
+				Double ponderedIpc = this.calculateIpcIncrease(tempContract, year);
+				Double ipcUntilLastYear = this.calculateIpcIncrease(tempContract, year - 1);
+				if (save) {
+					try {
+						billRepository.save(bill);
+						System.out.println("Saved " + bill.getBillId() + ", " + bill.getDescription());
+						InvoiceResume row = invoiceResumeRepository.findByBranchYearMonth(invoiceDetailMap.getKey(), year,
+								month);
+						if (row != null) {
+							row.setBill(bill);
+							invoiceResumeRepository.save(row);
+						}
+						this.lastInvoiceNumber++;
+					} catch (Exception e1) {
+						e1.printStackTrace();
+					}
+
+					for (Map.Entry<Long, Long[]> concept : invoiceDetailMap.getValue().entrySet()) {
+						billProduct = new BillProduct();
+						billProduct.setBill(bill);
+						billProduct.setProduct(productRepository.findByProductId(concept.getKey()));
+						billProduct.setQuantity(concept.getValue()[0].longValue());
+						billProduct.setPrice(concept.getKey() == 190L ? concept.getValue()[1]
+								: concept.getKey() == 200L
+										? new Double(concept.getValue()[1] * ipcUntilLastYear).longValue()
+										: new Double(concept.getValue()[1] * ponderedIpc).longValue());
+						try {
+							billProductRepository.save(billProduct);
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
+				} else {
+					for (Map.Entry<Long, Long[]> concept : invoiceDetailMap.getValue().entrySet()) {
+						billProduct = new BillProduct();
+						billProduct.setBill(bill);
+						billProduct.setProduct(productRepository.findByProductId(concept.getKey()));
+						billProduct.setQuantity(concept.getValue()[0].longValue());
+						billProduct.setPrice(concept.getKey() == 190L ? concept.getValue()[1]
+								: concept.getKey() == 200L
+										? new Double(concept.getValue()[1] * ipcUntilLastYear).longValue()
+										: new Double(concept.getValue()[1] * ponderedIpc).longValue());
+						try {
+							tempBillProducts.add(billProduct);
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
 					}
 					this.lastInvoiceNumber++;
-				} catch (Exception e1) {
-					e1.printStackTrace();
 				}
-
-				for (Map.Entry<Long, Long[]> concept : invoiceDetailMap.getValue().entrySet()) {
-					billProduct = new BillProduct();
-					billProduct.setBill(bill);
-					billProduct.setProduct(productRepository.findByProductId(concept.getKey()));
-					billProduct.setQuantity(concept.getValue()[0].longValue());
-					billProduct.setPrice(concept.getKey() == 190L ? concept.getValue()[1]
-							: concept.getKey() == 200L
-									? new Double(concept.getValue()[1] * ipcUntilLastYear).longValue()
-									: new Double(concept.getValue()[1] * ponderedIpc).longValue());
-					try {
-						billProductRepository.save(billProduct);
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}
-			} else {
-				for (Map.Entry<Long, Long[]> concept : invoiceDetailMap.getValue().entrySet()) {
-					billProduct = new BillProduct();
-					billProduct.setBill(bill);
-					billProduct.setProduct(productRepository.findByProductId(concept.getKey()));
-					billProduct.setQuantity(concept.getValue()[0].longValue());
-					billProduct.setPrice(concept.getKey() == 190L ? concept.getValue()[1]
-							: concept.getKey() == 200L
-									? new Double(concept.getValue()[1] * ipcUntilLastYear).longValue()
-									: new Double(concept.getValue()[1] * ponderedIpc).longValue());
-					try {
-						tempBillProducts.add(billProduct);
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}
-				this.lastInvoiceNumber++;
 			}
 		}
 	}
@@ -566,7 +681,7 @@ public class BillServiceImpl implements BillService {
 	public LinkedHashMap<Long, Long[]> cleanDetailMap(LinkedHashMap<Long, Long[]> invoiceDetailMap) {
 		List<Long> keysToRemove = new ArrayList<>();
 		invoiceDetailMap.forEach((k, v) -> {
-			if (v[0] == 0) {
+			if (v[0] == 0 || v[1] == 0) {
 				keysToRemove.add(k);
 			}
 		});
@@ -578,92 +693,55 @@ public class BillServiceImpl implements BillService {
 		return invoiceDetailMap;
 	}
 
-	public String generateInvoiceDescription(Long year, Long month, Contract contract,
+	public String generateInvoiceDescription(Long year, Long month, ContractFE contract,
 			LinkedHashMap<Long, Long[]> invoiceDetailMap) {
-		String description = "";
-		PaymentType tempPlan = contract.getPaymentPlan();
 		cleanDetailMap(invoiceDetailMap);
+		String description = "";
 		Set<Long> keys = invoiceDetailMap.keySet();
-		Double ponderedIpc = this.calculateIpcIncrease(contract, year);
-
-		if (keys.contains(192L)) {
-			description = generateBaseDescription(year, month, 192L, contract)
-					+ tempPlan.getGenerateAdjustedPlanDescription(ponderedIpc) + ". ";
-			if (keys.contains(191L)) {
-				description += "Documentos extra (" + invoiceDetailMap.get(191L)[0] + ").";
-			}
-		} else if (keys.contains(194L)) {
-			description = generateBaseDescription(year, month, 194L, contract)
-					+ tempPlan.getGenerateAdjustedPlanDescription(ponderedIpc) + ". ";
-			if (keys.contains(191L)) {
-				description += "Documentos extra (" + invoiceDetailMap.get(191L)[0] + ").";
-			}
-		} else if (keys.contains(191L)) {
-			if (tempPlan.getDiscriminatorType() == 1) {
-				description = generateBaseDescription(year, month, 192L, contract)
-						+ tempPlan.getGenerateAdjustedPlanDescription(ponderedIpc) + ". Documentos extra ("
-						+ invoiceDetailMap.get(191L)[0] + ").";
-			} else {
-				description = generateBaseDescription(year, month, 192L, contract)
-						+ tempPlan.getGenerateAdjustedPlanDescription(ponderedIpc) + " " + "("
-						+ invoiceDetailMap.get(191L)[0] + " documentos).";
-			}
+		String monthString = getMonthFromNumber(month);
+		
+		if (keys.contains(194L)) {
+			description = "Facturación anual " + monthString + " " + year + " - " + (year + 1) + ". ";
+		} else {
+			description = "Facturación correspondiente al mes de " + monthString + " " + year + ". ";
 		}
-
+		
 		if (keys.contains(196L)) {
-			if (description != "") {
-				description += " " + generateBaseDescription(year, month, 196L, contract);
-			} else {
-				description = generateBaseDescription(year, month, 196L, contract);
-			}
+			description += "Mantenimiento Facturación Electrónica entre " + monthString + " " + year + "-" + 
+		(year + 1) + " sucursal \"" + contract.getBranch().getCode() + " - " + contract.getBranch().getName() + "\". ";
 		}
-
+		
 		if (keys.contains(200L)) {
-			if (description != "") {
-				description += " " + generateBaseDescription(year, month, 200L, contract);
-			} else {
-				description = generateBaseDescription(year, month, 200L, contract);
-			}
+			description += "Mantenimiento Facturación Electrónica periodos anteriores vencidos sucursal \""
+					+ contract.getBranch().getCode() + " - " + contract.getBranch().getName() + "\". ";
 		}
-
-		if (keys.contains(190L)) {
-			if (description != "") {
-				description += " " + generateBaseDescription(year, month, 190L, contract);
-			} else {
-				description = generateBaseDescription(year, month, 190L, contract);
-			}
-		}
-
+		
 		return description;
 	}
 
-	public String generateBaseDescription(Long year, Long month, Long product, Contract contract) {
+	/*public String generateBaseDescription(Long year, Long month, Long product, ContractFE contract) {
 		String monthString = getMonthFromNumber(month);
 		String branchName = contract.getBranch().getCode() + " - " + contract.getBranch().getName();
 		String description = "";
 		switch (product.intValue()) {
-		case 190:
-			description = "Cobro de implementación Facturación electrónica sucursal \"" + branchName + "\". ";
-			break;
-		case 191:
-		case 192:
-			description = "Facturación mensual mes de " + monthString + " " + year + " Facturación electrónica. ";
-			break;
-		case 194:
-			description = "Facturación anual a partir de " + monthString + " " + year + " Facturación electrónica. ";
-			break;
-		case 196:
-			description = "Cobro mantenimiento Facturación Electrónica entre " + monthString + "-" + year + " y "
-					+ monthString + "-" + (year + 1) + " sucursal \"" + branchName + "\". ";
-			break;
-		case 200:
-			description = "Cobro mantenimiento Facturación Electrónica periodos anteriores vencidos sucursal \""
-					+ branchName + "\". ";
-			break;
-		default:
+			case 190:
+				description = "Cobro de implementación Facturación electrónica sucursal \"" + branchName + "\". ";
+				break;
+			case 194:
+				description = "Anualidad " + monthString + " " + year + " - " + (year + 1) + ". ";
+				break;
+			case 196:
+				description = "Mantenimiento Facturación Electrónica entre " + monthString + "-" + year + " y "
+						+ monthString + "-" + (year + 1) + " sucursal \"" + branchName + "\". ";
+				break;
+			case 200:
+				description = "Mantenimiento Facturación Electrónica periodos anteriores vencidos sucursal \""
+						+ branchName + "\". ";
+				break;
+			default:
 		}
 		return description;
-	}
+	}*/
 
 	public String getMonthFromNumber(Long month) {
 		switch (month.intValue()) {
@@ -705,7 +783,7 @@ public class BillServiceImpl implements BillService {
 			List<Bill> bills = billRepository.getFaceldiReport(year, month);
 			bills.forEach(bill -> {
 				Branch branch = bill.getBranch();
-				Contract contract = contractRepository.findByBranchId(bill.getBranch().getBranchId());
+				ContractFE contract = contractFeRepository.findByBranchId(bill.getBranch().getBranchId());
 				List<BillProduct> billProducts = billProductRepository.getByBillId(bill.getBillId());
 				billProducts.forEach(billProduct -> {
 					FaceldiReportRow row = new FaceldiReportRow();
@@ -735,14 +813,14 @@ public class BillServiceImpl implements BillService {
 					row.setClDireccion2(branch.getAddress());
 					row.setClTelefono(branch.getPhone());
 					row.setClCelular(branch.getPhone());
-					row.setClCorreo(branch.getClient().getCorreoElectronico()
-							+ ", facelectronica_cnt@jaimetorres.net, profesional_cnt@jaimetorres.net");
+					row.setClCorreo((billProduct.getBill().getBranch().getClient().getCorreoElectronico()
+							+ ", facelectronica_cnt@jaimetorres.net").replace(",,", ","));
 					row.setPrCodigoProducto(billProduct.getProduct().getProductId() == 200L ? 196L
 							: billProduct.getProduct().getProductId());
 					row.setPrDescripcion(
 							billProduct.getProduct().getProductId() == 200L ? "SOPORTE Y MANTENIMIENTO ANUAL  FACELDI"
 									: billProduct.getProduct().getDescription());
-					row.setPrDescripcionAdicional(bill.getDescription().split("\\.")[0] + ".");
+					row.setPrDescripcionAdicional(bill.getDescription());
 					row.setPrPrecioUnitario(billProduct.getPrice());
 					row.setPrCantidad(billProduct.getQuantity());
 					row.setPrBaseGravable(row.getPrPrecioUnitario() * row.getPrCantidad());
@@ -755,7 +833,7 @@ public class BillServiceImpl implements BillService {
 		} else {
 			this.tempBillProducts.forEach(billProduct -> {
 				FaceldiReportRow row = new FaceldiReportRow();
-				Contract contract = contractRepository.findByBranchId(billProduct.getBill().getBranch().getBranchId());
+				ContractFE contract = contractFeRepository.findByBranchId(billProduct.getBill().getBranch().getBranchId());
 				row.setFcConsecutivo(billProduct.getBill().getBillNumber());
 				row.setFcFechaDocumento(billProduct.getBill().getCreationDate());
 				row.setFcFechaVencimiento(billProduct.getBill().getExpirationDate());
@@ -782,14 +860,14 @@ public class BillServiceImpl implements BillService {
 				row.setClDireccion2(billProduct.getBill().getBranch().getAddress());
 				row.setClTelefono(billProduct.getBill().getBranch().getPhone());
 				row.setClCelular(billProduct.getBill().getBranch().getPhone());
-				row.setClCorreo(billProduct.getBill().getBranch().getClient().getCorreoElectronico()
-						+ ", facelectronica_cnt@jaimetorres.net, profesional_cnt@jaimetorres.net");
+				row.setClCorreo((billProduct.getBill().getBranch().getClient().getCorreoElectronico()
+						+ ", facelectronica_cnt@jaimetorres.net").replace(",,", ","));
 				row.setPrCodigoProducto(billProduct.getProduct().getProductId() == 200L ? 196L
 						: billProduct.getProduct().getProductId());
 				row.setPrDescripcion(
 						billProduct.getProduct().getProductId() == 200L ? "SOPORTE Y MANTENIMIENTO ANUAL  FACELDI"
 								: billProduct.getProduct().getDescription());
-				row.setPrDescripcionAdicional(billProduct.getBill().getDescription().split("\\.")[0] + ".");
+				row.setPrDescripcionAdicional(billProduct.getBill().getDescription());
 				row.setPrPrecioUnitario(billProduct.getPrice());
 				row.setPrCantidad(billProduct.getQuantity());
 				row.setPrBaseGravable(row.getPrPrecioUnitario() * row.getPrCantidad());
@@ -822,13 +900,14 @@ public class BillServiceImpl implements BillService {
 						itemIndex = 1;
 					}
 					SmartReportRow row = new SmartReportRow();
-					row.setDocumentNo(billProduct.getBill().getBillId());
-					row.setDescription(billProduct.getBill().getDescription().split("\\.")[0] + ".");
+					Alliance alliance = billProduct.getBill().getBranch().getClient().getAlliance();
+					row.setDocumentNo(billProduct.getBill().getBillNumber());
+					row.setDescription(billProduct.getBill().getDescription());
 					row.setDateInvoiced(billProduct.getBill().getCreationDate());
 					row.setDateAcct(billProduct.getBill().getCreationDate());
 					row.setCBPartnerId(billProduct.getBill().getBranch().getClient().getNit());
-					row.setCActivityId(41);// TODO Update
-					row.setCInvoiceLineCInvoiceId(billProduct.getBill().getBillId());
+					row.setCActivityId(alliance != null ? alliance.getSmartCC() : 15L);
+					row.setCInvoiceLineCInvoiceId(billProduct.getBill().getBillNumber());
 					row.setCInvoiceLine(itemIndex);
 					row.setCInvoiceLineMProductId(billProduct.getProduct().getProductId() == 200L ? 196L
 							: billProduct.getProduct().getProductId());
@@ -839,6 +918,7 @@ public class BillServiceImpl implements BillService {
 					row.setCInvoiceLineQtyEntered(billProduct.getQuantity());
 					row.setCInvoiceLinePriceEntered(billProduct.getPrice());
 					row.setCInvoiceLinePriceList(billProduct.getPrice());
+					row.setIdType(billProduct.getBill().getBranch().getClient().getTipoIdentificacion());
 					if (!(row.getCInvoiceLinePriceEntered() == 0 || row.getCInvoiceLineQtyEntered() == 0)) {
 						rowLines.add(row.toString());
 					}
@@ -858,13 +938,14 @@ public class BillServiceImpl implements BillService {
 					itemIndex = 1;
 				}
 				SmartReportRow row = new SmartReportRow();
+				Alliance alliance = billProduct.getBill().getBranch().getClient().getAlliance();
 				row.setDocumentNo(billProduct.getBill().getBillNumber());
-				row.setDescription(billProduct.getBill().getDescription().split("\\.")[0] + ".");
+				row.setDescription(billProduct.getBill().getDescription());
 				row.setDateInvoiced(billProduct.getBill().getCreationDate());
 				row.setDateAcct(billProduct.getBill().getCreationDate());
 				row.setCBPartnerId(billProduct.getBill().getBranch().getClient().getNit());
-				row.setCActivityId(41);// TODO Update
-				row.setCInvoiceLineCInvoiceId(billProduct.getBill().getBillId());
+				row.setCActivityId(alliance != null ? alliance.getSmartCC() : 15L);
+				row.setCInvoiceLineCInvoiceId(billProduct.getBill().getBillNumber());
 				row.setCInvoiceLine(itemIndex);
 				row.setCInvoiceLineMProductId(billProduct.getProduct().getProductId() == 200L ? 196L
 						: billProduct.getProduct().getProductId());
@@ -874,6 +955,7 @@ public class BillServiceImpl implements BillService {
 				row.setCInvoiceLineQtyEntered(billProduct.getQuantity());
 				row.setCInvoiceLinePriceEntered(billProduct.getPrice());
 				row.setCInvoiceLinePriceList(billProduct.getPrice());
+				row.setIdType(billProduct.getBill().getBranch().getClient().getTipoIdentificacion());
 				if (!(row.getCInvoiceLinePriceEntered() == 0 || row.getCInvoiceLineQtyEntered() == 0)) {
 					rowLines.add(row.toString());
 				}

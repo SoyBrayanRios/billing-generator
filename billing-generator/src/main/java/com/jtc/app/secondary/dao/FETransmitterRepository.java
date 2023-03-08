@@ -12,6 +12,11 @@ public interface FETransmitterRepository extends JpaRepository<FETransmitter, Lo
 	@Query(value = "select * from sucursales \n"
 			+ "where id_sucursal in (select distinct(id_sucursal_emisor) "
 			+ "from documentos where tipo_documento in ('FV', 'NC', 'ND', 'FE', 'FCD', 'FCF'))", nativeQuery = true)
-	public List<FETransmitter> getActiveTransmitters();
+	public List<FETransmitter> getActiveFeTransmitters();
+	
+	@Query(value = "select * from sucursales \n"
+			+ "where id_sucursal in (select distinct(id_sucursal_emisor) "
+			+ "from documentos where tipo_documento in ('DS', 'NAS'))", nativeQuery = true)
+	public List<FETransmitter> getActiveDsTransmitters();
 	
 }

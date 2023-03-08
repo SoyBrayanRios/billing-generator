@@ -39,6 +39,6 @@ public class Maintenance {
 	private Frequency maintenanceFrequency;
 	@JsonIgnore
 	@OneToMany(cascade = CascadeType.ALL, mappedBy = "maintenanceType")
-	private Set<Contract> contracts;
+	private Set<ContractFE> contracts;
 	
 }

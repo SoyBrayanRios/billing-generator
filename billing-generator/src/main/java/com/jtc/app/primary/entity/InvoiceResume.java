@@ -32,6 +32,8 @@ public class InvoiceResume {
 	private Long month;
 	@Column(name = "issued_invoices")
 	private Long issuedInvoices;
+	@Column(name = "module")
+	private String module;
 	@ManyToOne
 	@JoinColumn(name = "branch_id", nullable = false)
 	private Branch branch;

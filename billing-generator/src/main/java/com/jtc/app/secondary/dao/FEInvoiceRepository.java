@@ -24,7 +24,8 @@ public interface FEInvoiceRepository extends JpaRepository<FEInvoice, Long> {
 			+ "extract (month from fecha_hora_emision)=:month ;", nativeQuery = true)
 	public List<FEInvoice> findIssuedInvoicesByYearMonth(Long year, Long month);
 	
-	@Query(value = "select min(fecha_hora_emision) from documentos where id_sucursal_emisor=:branchId ;", nativeQuery = true)
+	@Query(value = "select min(fecha_hora_emision) from documentos where id_sucursal_emisor=:branchId "
+			+ "and tipo_documento in ('FV','FE','FCF','FCD') and prefijo_factura != 'SETT';", nativeQuery = true)
 	public Date getFirstIssuedDate(Long branchId);
 	
 }

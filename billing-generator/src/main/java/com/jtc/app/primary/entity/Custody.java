@@ -36,5 +36,5 @@ public class Custody {
 	@JoinColumn(name = "frequency_id", nullable = false)
 	private Frequency custodyFrequency;
 	@OneToMany(cascade = CascadeType.ALL, mappedBy = "custodyType")
-	private Set<Contract> contracts;
+	private Set<ContractFE> contracts;
 }

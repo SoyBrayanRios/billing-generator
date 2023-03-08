@@ -13,24 +13,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.jtc.app.primary.dao.BranchRepository;
-import com.jtc.app.primary.dao.ContractRepository;
+import com.jtc.app.primary.dao.ContractFERepository;
 import com.jtc.app.primary.dao.MaintenanceRepository;
 import com.jtc.app.primary.dao.PaymentTypeRepository;
 import com.jtc.app.primary.entity.Branch;
-import com.jtc.app.primary.entity.Contract;
+import com.jtc.app.primary.entity.ContractFE;
 import com.jtc.app.primary.entity.Custody;
 import com.jtc.app.primary.entity.Frequency;
 import com.jtc.app.primary.entity.Maintenance;
 import com.jtc.app.primary.entity.PaymentType;
-import com.jtc.app.service.ContractService;
+import com.jtc.app.service.ContractFEService;
 import com.jtc.app.service.FEInvoiceService;
 import com.jtc.app.service.FrequencyService;
 
 @Service
-public class ContractServiceImpl implements ContractService {
+public class ContractFEServiceImpl implements ContractFEService {
 
 	@Autowired
-	private ContractRepository contractRepository;
+	private ContractFERepository contractRepository;
 	@Autowired
 	private PaymentTypeRepository paymentTypeRepository;
 	@Autowired
@@ -43,9 +43,9 @@ public class ContractServiceImpl implements ContractService {
 	private FrequencyService frequencyService;
 	
 	@Override
-	public Contract saveContract(Contract contract) throws Exception {
+	public ContractFE saveContract(ContractFE contract) throws Exception {
 		//Validate if the contract exists
-				Contract exists = contractRepository.getContractById(contract.getContractId());
+				ContractFE exists = contractRepository.getContractById(contract.getContractId());
 				if (exists != null) {
 					System.out.println("El contrato que intenta guardar ya existe");
 					return exists;
@@ -54,7 +54,8 @@ public class ContractServiceImpl implements ContractService {
 				PaymentType tempPlan = contract.getPaymentPlan();
 				PaymentType paymentPlan = paymentTypeRepository.findPackageByParams(
 						tempPlan.getDiscriminatorType(), tempPlan.getCostRange(), tempPlan.getPackageName(), tempPlan.getDocumentQuantity(), 
-						tempPlan.getPackagePrice(), tempPlan.getDocumentPrice(), tempPlan.getPaymentFrequency(), tempPlan.getModulePlan());
+						tempPlan.getPackagePrice(), tempPlan.getDocumentPrice(), tempPlan.getPaymentFrequency(), tempPlan.getModulePlan(),
+						tempPlan.getMixedContract(), tempPlan.getSelfAdjusting());
 				if (paymentPlan == null) {
 					if (tempPlan.getCostRange() == "") {
 						tempPlan.setCostRange(null);
@@ -82,17 +83,17 @@ public class ContractServiceImpl implements ContractService {
 	}
 
 	@Override
-	public List<Contract> getContracts() {
+	public List<ContractFE> getContracts() {
 		return contractRepository.findAll();
 	}
 
 	@Override
-	public Contract getContractById(String contractId) {
+	public ContractFE getContractById(String contractId) {
 		return contractRepository.getContractById(contractId);
 	}
 	
 	@Override
-	public Contract getContractByBranch(Long branchId) {
+	public ContractFE getContractByBranch(Long branchId) {
 		return contractRepository.findByBranchId(branchId);
 	}
 
@@ -143,16 +144,16 @@ public class ContractServiceImpl implements ContractService {
 		return tempArray;
 	}
 	
-	public List<Contract> saveContractsFromFile(String filePath) {
-		List<Contract> contracts = new ArrayList<>();
+	public List<ContractFE> saveContractsFromFile(String filePath) {
+		List<ContractFE> contracts = new ArrayList<>();
 		List<String[]> tempArray = this.getArrayFromFile(filePath);
 		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 		tempArray.forEach(array -> {
 			//Get branch by nit
-			Contract contract = contractRepository.getContractById(array[6]);
+			ContractFE contract = contractRepository.getContractById(array[6]);
 
 			if (contract == null) {
-				contract = new Contract();
+				contract = new ContractFE();
 				Branch branch = branchRepository.findByBranchId(Long.parseLong(array[3]));
 				PaymentType paymentType = null;
 				Custody custody = null;
@@ -162,6 +163,7 @@ public class ContractServiceImpl implements ContractService {
 				contract.setContractId(array[6]);
 				try {
 					contract.setContractDate(formatter.parse(array[7]));
+					contract.setReferencePaymentDate(formatter.parse(array[7]));
 				} catch (ParseException e1) {
 					e1.printStackTrace();
 				}
@@ -193,7 +195,7 @@ public class ContractServiceImpl implements ContractService {
 							paymentType = paymentTypeRepository.findPackageByParams(1, array[34].equalsIgnoreCase("SI") ? array[21] : "", 
 									array[15], Integer.parseInt(array[16]), 
 									Long.parseLong(array[17]), (array[19] == "" || array[19] == null) ? 620L: Long.parseLong(array[19])
-											, frequency, "FE");
+											, frequency, "FE", array[35].equalsIgnoreCase("Si") ? true: false, array[34].equalsIgnoreCase("SI") ? true : false);
 						}
 						if (paymentType == null) {
 							paymentType = new PaymentType();
@@ -221,7 +223,8 @@ public class ContractServiceImpl implements ContractService {
 						Frequency frequency = frequencyService.getFrequencyById(4L);
 						paymentType = paymentTypeRepository.findPackageByParams(2, "", "", 0, 
 								array[35].equalsIgnoreCase("Si") ? Long.parseLong(array[17]): 0L, 
-										(array[20] == "" || array[20] == null) ? 620L: Long.parseLong(array[20]), frequency, "FE");
+										(array[20] == "" || array[20] == null) ? 620L: Long.parseLong(array[20]), frequency, "FE",
+												array[35].equalsIgnoreCase("Si") ? true: false, array[34].equalsIgnoreCase("SI") ? true : false);
 						if (paymentType == null) {
 							paymentType = new PaymentType();
 							paymentType.setMixedContract(array[35].equalsIgnoreCase("Si") ? true: false);
@@ -247,7 +250,7 @@ public class ContractServiceImpl implements ContractService {
 					} else if (array[12].equalsIgnoreCase("Por rango mensual")) {
 						Frequency frequency = frequencyService.getFrequencyById(4L);
 						paymentType = paymentTypeRepository.findPackageByParams(3, array[21], "", 0, 
-								0L, 0L, frequency, "FE");
+								0L, 0L, frequency, "FE", array[35].equalsIgnoreCase("Si") ? true: false, array[34].equalsIgnoreCase("SI") ? true : false);
 						if (paymentType == null) {
 							paymentType = new PaymentType();
 							paymentType.setDiscriminatorType(3);
