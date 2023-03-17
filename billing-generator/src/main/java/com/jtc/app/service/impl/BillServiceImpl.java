@@ -177,7 +177,8 @@ public class BillServiceImpl implements BillService {
 	public void adjustContracts(Long year, Long month) {
 		System.out.println("Running adjustContracts");
 		List<ContractFE> contracts = contractFeRepository.findAll().stream()
-				.filter(contract -> !contract.getSharedContract() && contract.getPaymentPlan().getSelfAdjusting())
+				.filter(contract -> !contract.getSharedContract() && 
+						contract.getPaymentPlan().getSelfAdjusting() && contract.getBranch().getActive())
 				.collect(Collectors.toList());
 		contracts.forEach(contract -> {
 			System.out.println(contract.getContractId());
@@ -260,6 +261,7 @@ public class BillServiceImpl implements BillService {
 							// aplica, generar cobro
 							if (chargeSubscription) {
 								calendar.set(year.intValue(), month.intValue() - 1, dinamycCalendar.get(Calendar.DATE));
+								contract.setReferencePaymentDate(calendar.getTime());
 								// calendar.add(Calendar.DATE, -1);
 							} else {
 								// calendar.set(year.intValue(), month.intValue() - 1, lastDayOfMonth);
@@ -288,22 +290,27 @@ public class BillServiceImpl implements BillService {
 										//------------------------------------------------------
 										Calendar endReferenceCalendar = Calendar.getInstance();
 										endReferenceCalendar.setTime(calendar.getTime());
-										endReferenceCalendar.add(Calendar.DATE, -1);
+										endReferenceCalendar.add(Calendar.DATE, 1);
 										Calendar startReferenceCalendar = Calendar.getInstance();
-										startReferenceCalendar.setTime(calendar.getTime());
+										startReferenceCalendar.set(Calendar.MONTH, (int)(month - 1));
+										//startReferenceCalendar.setTime(calendar.getTime());
 										startReferenceCalendar.set(Calendar.DATE, 1);
 										
 										for (Date date = startReferenceCalendar.getTime(); 
-												startReferenceCalendar.before(endReferenceCalendar);
+												date.before(endReferenceCalendar.getTime());
 												startReferenceCalendar.add(Calendar.DATE, 1), date = startReferenceCalendar.getTime()) {
 										    System.out.println(date);
 										    Long tempDocsCount = invoiceRepository.getIssuedInvoicesDuringContract(
-													resume.getBranch().getBranchId(), dinamycCalendar.getTime(), startReferenceCalendar.getTime());
+													resume.getBranch().getBranchId(), dinamycCalendar.getTime(), date);
 										    if (tempDocsCount > tempPlan.getDocumentQuantity()) {
+										    	contract.setReferencePaymentDate(date);
+										    	if (date.getMonth() > (int)(month - 1)) {
+										    		startReferenceCalendar.add(Calendar.DATE, -1);  
+										    	}
 										    	System.out.println("Refill: " + contract.getContractId() + " - " 
-										    + tempDocsCount + " - " + startReferenceCalendar.getTime());
+													    + tempDocsCount + " - " + startReferenceCalendar.getTime());
 										    	contract.setReferencePaymentDate(startReferenceCalendar.getTime());
-										    	endReferenceCalendar.setTime(startReferenceCalendar.getTime());
+										    	endReferenceCalendar.setTime(date);
 										    }
 										}
 										//------------------------------------------------------
@@ -355,6 +362,9 @@ public class BillServiceImpl implements BillService {
 				.collect(Collectors.toList());
 
 		contractsFiltered.forEach(contract -> {
+			if (contract.getBranch().getClient().getNit().equals("860063161")) {
+				System.out.println("Stop");
+			}
 			LinkedHashMap<Long, Long[]> invoiceDetailMap = new LinkedHashMap<>();
 			if (!contract.getSharedContract()) {
 				Long[] valQuant = new Long[2];
@@ -405,16 +415,21 @@ public class BillServiceImpl implements BillService {
 		List<ContractFE> contracts = contractFeRepository.findAll();
 		List<String> sharedContracts = contractFeRepository.getSharedContracts();
 		List<ContractFE> filteredContracts = contracts.stream()
-				.filter(contract -> sharedContracts.contains(contract.getContractId())).collect(Collectors.toList());
+				.filter(contract -> sharedContracts.contains(contract.getContractId()) &&
+						contract.getBranch().getActive()).collect(Collectors.toList());
 
 		List<ContractFE> contractConsumers = contracts.stream().filter(contract -> contract.getSharedContract())
 				.collect(Collectors.toList());
 
 		for (ContractFE contract : filteredContracts) {
+			System.out.println(contract.getContractId());
+			if (contract.getBranch().getClient().getNit().equals("860063161")) {
+				System.out.println("Stop");
+			}
 			LinkedHashMap<Long, Long[]> invoiceDetailMap = new LinkedHashMap<>();
 			PaymentType tempPlan = contract.getPaymentPlan();
 			Date contractDate = contract.getReferencePaymentDate();
-
+			
 			List<ContractFE> tempContracts = contractConsumers.stream()
 					.filter(c -> c.getSharedContractId().equalsIgnoreCase(contract.getContractId()))
 					.collect(Collectors.toList());
@@ -453,6 +468,7 @@ public class BillServiceImpl implements BillService {
 					// aplica, generar cobro
 					if (chargeSubscription) {
 						calendar.set(year.intValue(), month.intValue() - 1, dinamycCalendar.get(Calendar.DATE));
+						contract.setReferencePaymentDate(calendar.getTime());
 						// calendar.add(Calendar.DATE, -1);
 					} else {
 						// calendar.set(year.intValue(), month.intValue() - 1, lastDayOfMonth);
@@ -483,26 +499,30 @@ public class BillServiceImpl implements BillService {
 								//------------------------------------------------------
 								Calendar endReferenceCalendar = Calendar.getInstance();
 								endReferenceCalendar.setTime(calendar.getTime());
-								endReferenceCalendar.add(Calendar.DATE, -1);
+								endReferenceCalendar.add(Calendar.DATE, 1);
 								Calendar startReferenceCalendar = Calendar.getInstance();
 								startReferenceCalendar.setTime(calendar.getTime());
+								startReferenceCalendar.set(Calendar.MONTH, (int)(month - 1));
 								startReferenceCalendar.set(Calendar.DATE, 1);
-								
+
 								for (Date date = startReferenceCalendar.getTime(); 
-										startReferenceCalendar.before(endReferenceCalendar);
+										date.before(endReferenceCalendar.getTime());
 										startReferenceCalendar.add(Calendar.DATE, 1), date = startReferenceCalendar.getTime()) {
 								    System.out.println(date);
 								    Long tempDocsCount = 0L;
 								    for (Long branchId : tempBranches) {
 								    	tempDocsCount += invoiceRepository.getIssuedInvoicesDuringContract(branchId,
-												dinamycCalendar.getTime(), startReferenceCalendar.getTime());
+												dinamycCalendar.getTime(), date);
 									}
 								    
 								    if (tempDocsCount > tempPlan.getDocumentQuantity()) {
+								    	if (startReferenceCalendar.get(Calendar.MONTH) > (int)(month - 1L)) {
+								    		startReferenceCalendar.add(Calendar.DATE, -1);  
+								    	}
 								    	System.out.println("Refill: " + contract.getContractId() + " - " 
 											    + tempDocsCount + " - " + startReferenceCalendar.getTime());
 								    	contract.setReferencePaymentDate(startReferenceCalendar.getTime());
-								    	endReferenceCalendar.setTime(startReferenceCalendar.getTime());
+								    	endReferenceCalendar.setTime(date);
 								    }
 								}
 								//------------------------------------------------------

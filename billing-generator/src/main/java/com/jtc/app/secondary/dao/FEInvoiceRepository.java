@@ -12,14 +12,14 @@ public interface FEInvoiceRepository extends JpaRepository<FEInvoice, Long> {
 
 	public List<FEInvoice> findAllByStatus(int status);
 	
-	@Query(value = "select * from documentos where estado in (5, 7, 8, 11, 12, 13, 14, 15, 17) and "
+	@Query(value = "select * from documentos where estado in (3, 5, 6, 7, 8, 11, 12, 13, 14, 15, 17) and "
 			+ "numero_documento=:invoiceNumber and id_sucursal_emisor=:branchId;", nativeQuery = true)
 	public FEInvoice getSpecificInvoice(String invoiceNumber, Long branchId);
 	
-	@Query(value = "select * from documentos where tipo_documento= 'FV' and estado in (5, 7, 8, 11, 12, 13, 14, 15, 17);", nativeQuery = true)
+	@Query(value = "select * from documentos where tipo_documento= 'FV' and estado in (3, 5, 6, 7, 8, 11, 12, 13, 14, 15, 17)", nativeQuery = true)
 	public List<FEInvoice> findAllIssuedInvoice();
 	
-	@Query(value = "select * from documentos where tipo_documento= 'FV' and estado in (5, 7, 8, 11, 12, 13, 14, 15, 17)"
+	@Query(value = "select * from documentos where tipo_documento= 'FV' and estado in (3, 5, 6, 7, 8, 11, 12, 13, 14, 15, 17)\n"
 			+ "and extract(year from fecha_hora_emision)=:year and\n"
 			+ "extract (month from fecha_hora_emision)=:month ;", nativeQuery = true)
 	public List<FEInvoice> findIssuedInvoicesByYearMonth(Long year, Long month);

@@ -1,9 +1,9 @@
 package com.jtc.app.primary.entity;
 
+import java.util.Date;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import com.jtc.app.model.BaseContract;
@@ -29,8 +29,13 @@ public class ContractNE extends BaseContract {
 	private Boolean firstYearFree;
 	@Column(name = "discount_second_year")
 	private Long discountSecondYear;
-	@ManyToOne
-	@JoinColumn(name = "custody_id", nullable = true)
-	private Custody custodyType;
+	@Column(name = "implementation_cost")
+	private Long implementationCost;
+	@Column(name = "implementation_already_paid")
+	private Boolean implementationAlreadyPaid;
+	@Column(name = "qualification_date")
+	private Date qualificationDate;
+	@Column(name = "charge_date")
+	private Date chargeDate;
 
 }

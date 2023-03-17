@@ -106,7 +106,7 @@ public class PaymentType {
 			if (this.mixedContract) {
 				valQuant[0] = 1L;
 				valQuant[1] = this.packagePrice;
-				invoiceDetailMap.put(Long.parseLong(CONCEPTS[1][0]), valQuant);
+				invoiceDetailMap.put(Long.parseLong(CONCEPTS[2][0]), valQuant);
 			}
 			return invoiceDetailMap;
 		case 3: 

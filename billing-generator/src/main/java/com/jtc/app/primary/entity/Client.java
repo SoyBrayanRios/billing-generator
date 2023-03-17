@@ -5,6 +5,7 @@ import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -63,7 +64,7 @@ public class Client {
 	@JoinColumn(name = "alliance_id", nullable = true)
 	private Alliance alliance;
 	@JsonIgnore
-	@OneToMany(cascade = CascadeType.ALL, mappedBy = "client")
+	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "client")
 	private Set<Branch> branches;
 	
 }
