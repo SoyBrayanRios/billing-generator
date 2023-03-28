@@ -23,8 +23,16 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 	public void updateById(Long invoiceId);
 	
 	@Query(value = "select count(invoice_id) from invoice where branch_id =:branchId and issued_date between "
-			+ ":startDate and :limitDate ;", nativeQuery = true)
-	public Long getIssuedInvoicesDuringContract(Long branchId, Date startDate, Date limitDate);
+			+ ":startDate and :limitDate and document_type in ('FV', 'NC', 'FE', 'FCD', 'FCF', 'ND');", nativeQuery = true)
+	public Long getFeIssuedInvoicesDuringContract(Long branchId, Date startDate, Date limitDate);
+	
+	@Query(value = "select count(invoice_id) from invoice where branch_id =:branchId and issued_date between "
+			+ ":startDate and :limitDate and document_type in ('DS', 'NAS');", nativeQuery = true)
+	public Long getDsIssuedInvoicesDuringContract(Long branchId, Date startDate, Date limitDate);
+	
+	@Query(value = "select count(invoice_id) from invoice where branch_id =:branchId and issued_date between "
+			+ ":startDate and :limitDate and document_type in ('NI', 'NIA');", nativeQuery = true)
+	public Long getNeIssuedInvoicesDuringContract(Long branchId, Date startDate, Date limitDate);
 	
 	@Query(value = "select * from invoice where not counted;", nativeQuery = true)
 	public List<Invoice> getInvoicesToCount();

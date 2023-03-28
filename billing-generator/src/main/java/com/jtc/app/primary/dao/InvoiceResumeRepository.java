@@ -13,13 +13,13 @@ import com.jtc.app.primary.entity.InvoiceResume;
 @Transactional
 public interface InvoiceResumeRepository extends JpaRepository<InvoiceResume, Long> {
 
-	@Query(value = "select * from invoice_resume where branch_id=:branchId and \"year\"=:year and \"month\"=:month ;", 
+	@Query(value = "select * from invoice_resume where branch_id=:branchId and \"year\"=:year and \"month\"=:month and module=:module", 
 			nativeQuery = true)
-	public InvoiceResume findByBranchYearMonth(Long branchId, Long year, Long month);
+	public InvoiceResume findByBranchYearMonth(Long branchId, Long year, Long month, String module);
 	
-	@Query(value = "select * from invoice_resume where \"year\"=:year and \"month\"=:month ;", 
+	@Query(value = "select * from invoice_resume where \"year\"=:year and \"month\"=:month and module=:module", 
 			nativeQuery = true)
-	public List<InvoiceResume> findByYearMonth(Long year, Long month);
+	public List<InvoiceResume> findByYearMonthModule(Long year, Long month, String module);
 	
 	@Modifying(clearAutomatically = true)
 	@Query(value = "update invoice_resume set issued_invoices=:issuedInvoices where resume_id=:resumeId ;", nativeQuery = true)

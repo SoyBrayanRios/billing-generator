@@ -37,25 +37,28 @@ public class BillController {
 		return billService.getBillById(billId);
 	}
 
-	@GetMapping("/generate/{year}/{month}/{number}/{env}")
-	public JsonResponse generateBills(@PathVariable("year") Long year,
-			@PathVariable("month") Long month, @PathVariable("number") Long invoiceNumber, @PathVariable("env") String environment) {
-		return billService.generateBills(year, month, invoiceNumber, environment);
+	@GetMapping("/generate/{year}/{month}/{number}/{env}/{module}")
+	public JsonResponse generateBills(@PathVariable("year") Long year, @PathVariable("month") Long month, 
+			@PathVariable("number") Long invoiceNumber, @PathVariable("env") String environment, @PathVariable("module") String module) {
+		return billService.generateBills(year, month, invoiceNumber, environment, module);
 	}
 	
-	@GetMapping("/fe-faceldi/{year}/{month}/{number}/{env}")
-	public Object[] generateTestBills(@PathVariable(name = "year") Long year, @PathVariable(name = "month") Long month, @PathVariable("number") Long invoiceNumber) {
-		return billService.generateTestBills(year, month, invoiceNumber);
+	@GetMapping("/fe-faceldi/{year}/{month}/{number}/{env}/{module}")
+	public Object[] generateTestBills(@PathVariable(name = "year") Long year, @PathVariable(name = "month") Long month, 
+			@PathVariable("number") Long invoiceNumber, @PathVariable("module") String module) {
+		return billService.generateTestBills(year, month, invoiceNumber, module);
 	}
 	
-	@GetMapping("/fe-faceldi/{year}/{month}/{env}")
-	public Object[] generateFaceldiFile(@PathVariable(name = "year") Long year, @PathVariable(name = "month") Long month, @PathVariable(name = "env") String environment) {
-		return billService.generateFaceldiFile(year, month, environment);
+	@GetMapping("/fe-faceldi/{year}/{month}/{env}/{module}")
+	public Object[] generateFaceldiFile(@PathVariable(name = "year") Long year, @PathVariable(name = "month") Long month, 
+			@PathVariable(name = "env") String environment, @PathVariable("module") String module) {
+		return billService.generateFaceldiFile(year, month, environment, module);
 	}
 	
-	@GetMapping("/fe-smart/{year}/{month}/{env}")
-	public Object[] generateSmartFile(@PathVariable(name = "year") Long year, @PathVariable(name = "month") Long month, @PathVariable(name = "env") String environment) {
-		return billService.generateSmartFile(year, month, environment);
+	@GetMapping("/fe-smart/{year}/{month}/{env}/{module}")
+	public Object[] generateSmartFile(@PathVariable(name = "year") Long year, @PathVariable(name = "month") Long month, 
+			@PathVariable(name = "env") String environment, @PathVariable("module") String module) {
+		return billService.generateSmartFile(year, month, environment, module);
 	}
 	
 	@GetMapping("/fe-smart")

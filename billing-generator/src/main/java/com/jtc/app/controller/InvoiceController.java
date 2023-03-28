@@ -49,9 +49,11 @@ public class InvoiceController {
 		return invoiceService.updateInvoicesByYearMonth(year, month);
 	}
 	
-	@GetMapping("/x-contract/{branchId}/{startDate}/{limitDate}")
+	//TODO
+	/*@GetMapping("/x-contract/{branchId}/{startDate}/{limitDate}/{module}")
 	public Long getIssuedInvoicesDuringContract(@PathVariable(name = "branchId") Long branchId, 
-			@PathVariable(name = "startDate") String startDate, @PathVariable(name = "limitDate") String limitDate) {
+			@PathVariable(name = "startDate") String startDate, @PathVariable(name = "limitDate") String limitDate,
+			@PathVariable(name = "module") String module) {
 		return invoiceService.getIssuedInvoicesDuringContract(branchId, startDate, limitDate);
-	}
+	}*/
 }

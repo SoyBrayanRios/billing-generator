@@ -32,4 +32,6 @@ public class BillDetail {
 	private Long initialInvoice;
 	@Column(name = "final_invoice")
 	private Long finalInvoice;
+	@Column(name = "module")
+	private String module;
 }

@@ -13,24 +13,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.jtc.app.primary.dao.BranchRepository;
-import com.jtc.app.primary.dao.ContractFERepository;
+import com.jtc.app.primary.dao.ContractNERepository;
 import com.jtc.app.primary.dao.MaintenanceRepository;
 import com.jtc.app.primary.dao.PaymentTypeRepository;
 import com.jtc.app.primary.entity.Branch;
-import com.jtc.app.primary.entity.ContractFE;
+import com.jtc.app.primary.entity.ContractNE;
 import com.jtc.app.primary.entity.Custody;
 import com.jtc.app.primary.entity.Frequency;
 import com.jtc.app.primary.entity.Maintenance;
 import com.jtc.app.primary.entity.PaymentType;
-import com.jtc.app.service.ContractFEService;
+import com.jtc.app.service.ContractNEService;
 import com.jtc.app.service.FEInvoiceService;
 import com.jtc.app.service.FrequencyService;
 
 @Service
-public class ContractFEServiceImpl implements ContractFEService {
+public class ContractNEServiceImpl implements ContractNEService {
 
 	@Autowired
-	private ContractFERepository contractRepository;
+	private ContractNERepository contractRepository;
 	@Autowired
 	private PaymentTypeRepository paymentTypeRepository;
 	@Autowired
@@ -43,9 +43,9 @@ public class ContractFEServiceImpl implements ContractFEService {
 	private FrequencyService frequencyService;
 
 	@Override
-	public ContractFE saveContract(ContractFE contract) throws Exception {
+	public ContractNE saveContract(ContractNE contract) throws Exception {
 		// Validate if the contract exists
-		ContractFE exists = contractRepository.getContractById(contract.getContractId());
+		ContractNE exists = contractRepository.getContractById(contract.getContractId());
 		if (exists != null) {
 			System.out.println("El contrato que intenta guardar ya existe");
 			return exists;
@@ -66,36 +66,28 @@ public class ContractFEServiceImpl implements ContractFEService {
 			tempPlan.generatePlanDescription();
 			paymentPlan = paymentTypeRepository.save(tempPlan);
 		}
-		// Validate if the maintenanceType exists
-		Maintenance tempMaintenance = contract.getMaintenanceType();
-		Maintenance maintenancePlan = maintenanceRepository.getMaintenanceByCostFrequency(
-				tempMaintenance.getMaintenanceCost(), tempMaintenance.getMaintenanceFrequency());
-		if (maintenancePlan == null) {
-			maintenancePlan = maintenanceRepository.save(tempMaintenance);
-		}
 		// Save changes different from contract
 		contract.setPaymentPlan(paymentPlan);
-		contract.setMaintenanceType(maintenancePlan);
+		// contract.setMaintenanceType(maintenancePlan);
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTime(contract.getContractDate());
 		calendar.add(Calendar.DATE, 1);
 		contract.setContractDate(calendar.getTime());
 		return contractRepository.save(contract);
-
 	}
 
 	@Override
-	public List<ContractFE> getContracts() {
+	public List<ContractNE> getContracts() {
 		return contractRepository.findAll();
 	}
 
 	@Override
-	public ContractFE getContractById(String contractId) {
+	public ContractNE getContractById(String contractId) {
 		return contractRepository.getContractById(contractId);
 	}
 
 	@Override
-	public ContractFE getContractByBranch(Long branchId) {
+	public ContractNE getContractByBranch(Long branchId) {
 		return contractRepository.findByBranchId(branchId);
 	}
 
@@ -147,29 +139,27 @@ public class ContractFEServiceImpl implements ContractFEService {
 		return tempArray;
 	}
 
-	public List<ContractFE> saveContractsFromFile(String filePath) {
-		List<ContractFE> contracts = new ArrayList<>();
+	public List<ContractNE> saveContractsFromFile(String filePath) {
+		List<ContractNE> contracts = new ArrayList<>();
 		List<String[]> tempArray = this.getArrayFromFile(filePath);
 		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 		tempArray.forEach(array -> {
 			// Get branch by nit
-			ContractFE contract = contractRepository.getContractById(array[6]);
+			ContractNE contract = contractRepository.getContractById(array[6]);
 
 			if (contract == null) {
-				contract = new ContractFE();
+				contract = new ContractNE();
 				Branch branch = branchRepository.findByBranchId(Long.parseLong(array[3]));
 				PaymentType paymentType = null;
 				Custody custody = null;
 
-				contract.setBranch(branch);
-				contract.setCustodyType(custody);
-				contract.setContractId(array[6]);
-				try {
-					contract.setContractDate(formatter.parse(array[7]));
-					contract.setReferencePaymentDate(formatter.parse(array[7]));
-				} catch (ParseException e1) {
-					e1.printStackTrace();
-				}
+				/*
+				 * contract.setBranch(branch); contract.setCustodyType(custody);
+				 * contract.setContractId(array[6]); try {
+				 * contract.setContractDate(formatter.parse(array[7]));
+				 * contract.setReferencePaymentDate(formatter.parse(array[7])); } catch
+				 * (ParseException e1) { e1.printStackTrace(); }
+				 */
 				contract.setFirstIssueDate(feInvoiceService.getFirstIssuedDate(branch.getBranchId()));
 				contract.setCreatedBy(array[8]);
 				contract.setIpcIncrease(array[9].equalsIgnoreCase("Si") ? true : false);
@@ -305,21 +295,26 @@ public class ContractFEServiceImpl implements ContractFEService {
 							maintenance.setMaintenanceCost(Long.parseLong(array[22]));
 							maintenance.setMaintenanceFrequency(frequency);
 							// contract.setMaintenanceType(maintenance);
-							contract.setMaintenanceType(maintenanceRepository.save(maintenance));
-							contract.setMaintenanceAlreadyPaid(array[25].equalsIgnoreCase("Si") ? false : true);
-							contract.setSharedMaintenance(false);
+							/*
+							 * contract.setMaintenanceType(maintenanceRepository.save(maintenance));
+							 * contract.setMaintenanceAlreadyPaid(array[25].equalsIgnoreCase("Si") ? false :
+							 * true); contract.setSharedMaintenance(false);
+							 */
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
 					} else {
-						contract.setMaintenanceType(maintenance);
-						contract.setMaintenanceAlreadyPaid(array[25].equalsIgnoreCase("Si") ? false : true);
-						contract.setSharedMaintenance(false);
+						/*
+						 * contract.setMaintenanceType(maintenance);
+						 * contract.setMaintenanceAlreadyPaid(array[25].equalsIgnoreCase("Si") ? false :
+						 * true); contract.setSharedMaintenance(false);
+						 */
 					}
 				} else {
-					contract.setMaintenanceType(null);
-					contract.setMaintenanceAlreadyPaid(false);
-					contract.setSharedMaintenance(true);
+					/*
+					 * contract.setMaintenanceType(null); contract.setMaintenanceAlreadyPaid(false);
+					 * contract.setSharedMaintenance(true);
+					 */
 				}
 				try {
 					contractRepository.save(contract);
@@ -372,5 +367,4 @@ public class ContractFEServiceImpl implements ContractFEService {
 			return null;
 		}
 	}
-
 }

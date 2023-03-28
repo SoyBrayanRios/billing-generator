@@ -11,14 +11,19 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.jtc.app.builder.ContractFactory;
+import com.jtc.app.model.BaseContract;
 import com.jtc.app.primary.dao.BillProductRepository;
 import com.jtc.app.primary.dao.BillRepository;
 import com.jtc.app.primary.dao.BranchRepository;
+import com.jtc.app.primary.dao.ContractDSRepository;
 import com.jtc.app.primary.dao.ContractFERepository;
+import com.jtc.app.primary.dao.ContractNERepository;
 import com.jtc.app.primary.dao.InvoiceRepository;
 import com.jtc.app.primary.dao.InvoiceResumeRepository;
 import com.jtc.app.primary.dao.PaymentTypeRepository;
@@ -28,7 +33,9 @@ import com.jtc.app.primary.entity.Bill;
 import com.jtc.app.primary.entity.BillDetail;
 import com.jtc.app.primary.entity.BillProduct;
 import com.jtc.app.primary.entity.Branch;
+import com.jtc.app.primary.entity.ContractDS;
 import com.jtc.app.primary.entity.ContractFE;
+import com.jtc.app.primary.entity.ContractNE;
 import com.jtc.app.primary.entity.FaceldiReportRow;
 import com.jtc.app.primary.entity.InvoiceResume;
 import com.jtc.app.primary.entity.JsonResponse;
@@ -38,6 +45,7 @@ import com.jtc.app.service.BillDetailService;
 import com.jtc.app.service.BillService;
 
 @Service
+@Configurable
 public class BillServiceImpl implements BillService {
 
 	@Autowired
@@ -49,6 +57,10 @@ public class BillServiceImpl implements BillService {
 	@Autowired
 	private ContractFERepository contractFeRepository;
 	@Autowired
+	private ContractDSRepository contractDsRepository;
+	@Autowired
+	private ContractNERepository contractNeRepository;
+	@Autowired
 	private ProductRepository productRepository;
 	@Autowired
 	private BillProductRepository billProductRepository;
@@ -58,7 +70,8 @@ public class BillServiceImpl implements BillService {
 	private BillDetailService billDetailService;
 	@Autowired
 	private PaymentTypeRepository paymentTypeRepository;
-
+	@Autowired
+	private ContractFactory contractFactory;
 	private Long initialInvoiceNumber = 0L;
 	private Long lastInvoiceNumber = 0L;
 	private List<BillProduct> tempBillProducts;
@@ -66,7 +79,7 @@ public class BillServiceImpl implements BillService {
 	private Double[][] ipcList = { { 2018.0, 0.0 }, { 2019.0, 0.0380 }, { 2020.0, 0.0161 }, { 2021.0, 0.0562 },
 			{ 2022.0, 0.1312 }, { 2023.0, 0.0 } };
 
-	public Double calculateIpcIncrease(ContractFE contract, Long billingYear) {
+	public Double calculateIpcIncrease(BaseContract contract, Long billingYear) {
 		Double increase = 1.0;
 		if (contract.getIpcIncrease()) {
 			int contractYear = contract.getContractDate().getYear() + 1900;
@@ -120,18 +133,20 @@ public class BillServiceImpl implements BillService {
 	}
 
 	@Override
-	public JsonResponse generateBills(Long year, Long month, Long invoiceNumber, String environment) {
+	public JsonResponse generateBills(Long year, Long month, Long invoiceNumber, String environment, String module) {
 		this.initialInvoiceNumber = invoiceNumber;
 		this.lastInvoiceNumber = initialInvoiceNumber;
 		Boolean update = environment.equalsIgnoreCase("S") ? false : true;
 		LinkedHashMap<Long, LinkedHashMap<Long, Long[]>> invoiceDetailFullMap = new LinkedHashMap<>();
-		List<InvoiceResume> resumes = invoiceResumeRepository.findByYearMonth(year, month).stream()
+		List<InvoiceResume> resumes = invoiceResumeRepository.findByYearMonthModule(year, month, module).stream()
 				.filter(resume -> resume.getBranch().getActive()).collect(Collectors.toList()); // Conteos de ese mes
-		adjustContracts(year, month);
-		getBillsToCollectByMonthlyIssuedInvoices(year, month, invoiceDetailFullMap, resumes, update);
-		getBillsToCollectByOtherCharges(year, month, invoiceDetailFullMap, update);
-		getBillsToCollectDueSharedContracts(year, month, invoiceDetailFullMap, resumes, update);
-		saveBills(year, month, invoiceDetailFullMap, update);
+		if (module.equals("FE")) {
+			adjustContracts(year, month);
+		}
+		getBillsToCollectByMonthlyIssuedInvoices(year, month, invoiceDetailFullMap, resumes, update, module);
+		getBillsToCollectByOtherCharges(year, month, invoiceDetailFullMap, update, module);
+		getBillsToCollectDueSharedContracts(year, month, invoiceDetailFullMap, resumes, update, module);
+		saveBills(year, month, invoiceDetailFullMap, update, module);
 		if (update) {
 			try {
 				BillDetail billDetail = new BillDetail();
@@ -139,6 +154,7 @@ public class BillServiceImpl implements BillService {
 				billDetail.setMonth(month);
 				billDetail.setInitialInvoice(initialInvoiceNumber);
 				billDetail.setFinalInvoice(lastInvoiceNumber - 1);
+				billDetail.setModule(module);
 				billDetailService.saveBillDetail(billDetail);
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -150,19 +166,21 @@ public class BillServiceImpl implements BillService {
 	}
 
 	@Override
-	public Object[] generateTestBills(Long year, Long month, Long invoiceNumber) {
+	public Object[] generateTestBills(Long year, Long month, Long invoiceNumber, String module) {
 		this.initialInvoiceNumber = invoiceNumber;
 		this.lastInvoiceNumber = initialInvoiceNumber;
 		LinkedHashMap<Long, LinkedHashMap<Long, Long[]>> invoiceDetailFullMap = new LinkedHashMap<>();
-		List<InvoiceResume> resumes = invoiceResumeRepository.findByYearMonth(year, month).stream()
+		List<InvoiceResume> resumes = invoiceResumeRepository.findByYearMonthModule(year, month, module).stream()
 				.filter(resume -> resume.getBranch().getActive()).collect(Collectors.toList()); // Conteos de ese mes
-		adjustContracts(year, month);
-		getBillsToCollectByMonthlyIssuedInvoices(year, month, invoiceDetailFullMap, resumes, false);
-		getBillsToCollectByOtherCharges(year, month, invoiceDetailFullMap, false);
-		getBillsToCollectDueSharedContracts(year, month, invoiceDetailFullMap, resumes, false);
-		saveBills(year, month, invoiceDetailFullMap, false);
-		Object[] result = generateFaceldiFile(year, month, "S");
-		this.tempSmartFile = generateSmartFile(year, month, "S");
+		if (module.equals("FE")) {
+			adjustContracts(year, month);
+		}
+		getBillsToCollectByMonthlyIssuedInvoices(year, month, invoiceDetailFullMap, resumes, false, module);
+		getBillsToCollectByOtherCharges(year, month, invoiceDetailFullMap, false, module);
+		getBillsToCollectDueSharedContracts(year, month, invoiceDetailFullMap, resumes, false, module);
+		saveBills(year, month, invoiceDetailFullMap, false, module);
+		Object[] result = generateFaceldiFile(year, month, "S", module);
+		this.tempSmartFile = generateSmartFile(year, month, "S", module);
 
 		this.initialInvoiceNumber = 0L;
 		this.lastInvoiceNumber = initialInvoiceNumber;
@@ -178,13 +196,14 @@ public class BillServiceImpl implements BillService {
 		System.out.println("Running adjustContracts");
 		List<ContractFE> contracts = contractFeRepository.findAll().stream()
 				.filter(contract -> !contract.getSharedContract() && 
-						contract.getPaymentPlan().getSelfAdjusting() && contract.getBranch().getActive())
+						contract.getPaymentPlan().getSelfAdjusting() && contract.getBranch().getActive()
+						&& contract.getBranch().getFE())
 				.collect(Collectors.toList());
 		contracts.forEach(contract -> {
 			System.out.println(contract.getContractId());
 			PaymentType tempPlan = contract.getPaymentPlan();
 			InvoiceResume tempResume = invoiceResumeRepository.findByBranchYearMonth(contract.getBranch().getBranchId(),
-					year, month);
+					year, month, "FE");
 			Long issuedInvoices = 0L;
 			if (tempResume != null) {
 				issuedInvoices = tempResume.getIssuedInvoices();
@@ -215,18 +234,20 @@ public class BillServiceImpl implements BillService {
 
 	public void getBillsToCollectByMonthlyIssuedInvoices(Long year, Long month,
 			LinkedHashMap<Long, LinkedHashMap<Long, Long[]>> invoiceDetailFullMap, List<InvoiceResume> resumes,
-			Boolean update) {
-		System.out.println("Running getBillsToCollectByMonthlyIssuedInvoices");
+			Boolean update,String module) {
+		System.out.println("Running getBillsToCollectByMonthlyIssuedInvoices - " + module);
 		// Obtener los contratos compartidos
-		List<String> sharedContractsFilter = contractFeRepository.getSharedContracts();
+		List<String> sharedContractsFilter = contractFactory.getSharedContracts(module);
+		
 		// Obtener los contratos de esas sucursales
 		for (InvoiceResume resume : resumes) {
 			LinkedHashMap<Long, Long[]> invoiceDetailMap = new LinkedHashMap<>();
 			// Calcular el costo
-			ContractFE contract = contractFeRepository.findByBranchId(resume.getBranch().getBranchId());
+			
+			BaseContract contract = contractFactory.getContractByBranch(module, resume.getBranch().getBranchId());
 
 			if (contract != null) {
-				// System.out.println(contract.getContractId());
+				
 				boolean skip = Optional.ofNullable(sharedContractsFilter.contains(contract.getContractId()))
 						.orElse(false);
 				if (skip == false) {
@@ -234,7 +255,7 @@ public class BillServiceImpl implements BillService {
 					PaymentType tempPlan = contract.getPaymentPlan();
 					Date contractDate = contract.getReferencePaymentDate();
 					if (!contract.getSharedContract()) {
-						if (tempPlan.getDiscriminatorType() == 1
+						if ((tempPlan.getDiscriminatorType() == 1 || tempPlan.getDiscriminatorType() == 4 || tempPlan.getDiscriminatorType() == 5)
 								&& tempPlan.getPaymentFrequency().getFrequencyId() == 8) {
 							boolean chargeSubscription = false;
 							Calendar calendar = Calendar.getInstance();
@@ -242,7 +263,6 @@ public class BillServiceImpl implements BillService {
 							calendar.set(year.intValue(), month.intValue() - 1, 1, 0, 0, 0);
 							dinamycCalendar.set(contractDate.getYear() + 1900, contractDate.getMonth(),
 									contractDate.getDate(), 23, 59, 59);
-							// int lastDayOfMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
 							// Calcula vencimiento de la anualidad
 							if (calendar.get(Calendar.YEAR) > dinamycCalendar.get(Calendar.YEAR)) {
 								if (calendar.get(Calendar.MONTH) <= dinamycCalendar.get(Calendar.MONTH)) {
@@ -262,20 +282,13 @@ public class BillServiceImpl implements BillService {
 							if (chargeSubscription) {
 								calendar.set(year.intValue(), month.intValue() - 1, dinamycCalendar.get(Calendar.DATE));
 								contract.setReferencePaymentDate(calendar.getTime());
-								// calendar.add(Calendar.DATE, -1);
 							} else {
-								// calendar.set(year.intValue(), month.intValue() - 1, lastDayOfMonth);
 								calendar.set(year.intValue(), month.intValue(), 1);
 							}
 
-							Long issuedDocs = invoiceRepository.getIssuedInvoicesDuringContract(
-									resume.getBranch().getBranchId(), dinamycCalendar.getTime(), calendar.getTime());
+							Long issuedDocs = contractFactory.getIssuedInvoicesDuringContract(module, resume.getBranch().getBranchId(),
+									dinamycCalendar.getTime(), calendar.getTime()); 
 							// Calcular las facturas emitidas del mes anterior
-
-							/*
-							 * calendar.add(Calendar.MONTH, -1); calendar.set(Calendar.DATE,
-							 * calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
-							 */
 
 							Boolean refill = false;
 							if (issuedDocs > tempPlan.getDocumentQuantity()) {
@@ -287,21 +300,19 @@ public class BillServiceImpl implements BillService {
 										refill = true;
 										chargeSubscription = true;
 										
-										//------------------------------------------------------
 										Calendar endReferenceCalendar = Calendar.getInstance();
 										endReferenceCalendar.setTime(calendar.getTime());
 										endReferenceCalendar.add(Calendar.DATE, 1);
 										Calendar startReferenceCalendar = Calendar.getInstance();
 										startReferenceCalendar.set(Calendar.MONTH, (int)(month - 1));
-										//startReferenceCalendar.setTime(calendar.getTime());
 										startReferenceCalendar.set(Calendar.DATE, 1);
 										
 										for (Date date = startReferenceCalendar.getTime(); 
 												date.before(endReferenceCalendar.getTime());
 												startReferenceCalendar.add(Calendar.DATE, 1), date = startReferenceCalendar.getTime()) {
 										    System.out.println(date);
-										    Long tempDocsCount = invoiceRepository.getIssuedInvoicesDuringContract(
-													resume.getBranch().getBranchId(), dinamycCalendar.getTime(), date);
+										    Long tempDocsCount = contractFactory.getIssuedInvoicesDuringContract(module, 
+										    		resume.getBranch().getBranchId(), dinamycCalendar.getTime(), date);
 										    if (tempDocsCount > tempPlan.getDocumentQuantity()) {
 										    	contract.setReferencePaymentDate(date);
 										    	if (date.getMonth() > (int)(month - 1)) {
@@ -313,13 +324,12 @@ public class BillServiceImpl implements BillService {
 										    	endReferenceCalendar.setTime(date);
 										    }
 										}
-										//------------------------------------------------------
 									}
 								}
 								
 							}
 							calendar.set(year.intValue(), month.intValue() - 1, 1);
-							Long issuedDocsLastMonth = invoiceRepository.getIssuedInvoicesDuringContract(
+							Long issuedDocsLastMonth = contractFactory.getIssuedInvoicesDuringContract(module, 
 									resume.getBranch().getBranchId(), dinamycCalendar.getTime(), calendar.getTime());
 							
 							invoiceDetailMap = tempPlan.getAnnualBillDetail(issuedDocs, issuedDocsLastMonth,
@@ -329,10 +339,10 @@ public class BillServiceImpl implements BillService {
 						}
 					}
 					addMoreDetailsToPay(year, month, contract.getBranch().getBranchId(), contract, invoiceDetailMap,
-							invoiceDetailFullMap, update);
+							invoiceDetailFullMap, update, module);
 					if (update) {
 						try {
-							contractFeRepository.save(contract);
+							contractFactory.saveContract(contract);
 						} catch (Exception e) {
 							System.out.println("Hubo un error al actualizar el contrato " + contract.getContractId());
 						}						
@@ -348,23 +358,22 @@ public class BillServiceImpl implements BillService {
 	}
 
 	public void getBillsToCollectByOtherCharges(Long year, Long month,
-			LinkedHashMap<Long, LinkedHashMap<Long, Long[]>> invoiceDetailFullMap, Boolean update) {
+			LinkedHashMap<Long, LinkedHashMap<Long, Long[]>> invoiceDetailFullMap, Boolean update, String module) {
 		System.out.println("Running getBillsToCollectByOtherCharges");
-
-		List<ContractFE> contracts = contractFeRepository.findAll();
+		
+		List<? extends BaseContract> contracts = contractFactory.getModuleContracts(module);
+		
 		Set<Long> keys = invoiceDetailFullMap.keySet();
 
-		List<String> sharedContractsFilter = contractFeRepository.getSharedContracts();
-
-		List<ContractFE> contractsFiltered = contracts.stream()
+		List<String> sharedContractsFilter = contractFactory.getSharedContracts(module);
+		
+		List<? extends BaseContract> contractsFiltered = contracts.stream()
 				.filter(c -> !keys.contains(c.getBranch().getBranchId()) && c.getBranch().getActive()
-						&& !c.getSharedMaintenance() && !sharedContractsFilter.contains(c.getContractId()))
-				.collect(Collectors.toList());
+						&& !sharedContractsFilter.contains(c.getContractId())
+						&& (c instanceof ContractFE ? !((ContractFE)c).getSharedMaintenance(): false))
+				.collect(Collectors.toList());//TODO Check
 
 		contractsFiltered.forEach(contract -> {
-			if (contract.getBranch().getClient().getNit().equals("860063161")) {
-				System.out.println("Stop");
-			}
 			LinkedHashMap<Long, Long[]> invoiceDetailMap = new LinkedHashMap<>();
 			if (!contract.getSharedContract()) {
 				Long[] valQuant = new Long[2];
@@ -389,7 +398,7 @@ public class BillServiceImpl implements BillService {
 							
 							if (update) {
 								try {
-									contractFeRepository.save(contract);
+									contractFactory.saveContract(contract);
 								} catch (Exception e) {
 									System.out.println("Hubo un error al actualizar el contrato " + contract.getContractId());
 								}
@@ -404,33 +413,31 @@ public class BillServiceImpl implements BillService {
 			}
 
 			addMoreDetailsToPay(year, month, contract.getBranch().getBranchId(), contract, invoiceDetailMap,
-					invoiceDetailFullMap, update);
+					invoiceDetailFullMap, update, module);
 		});
 	}
 
 	public void getBillsToCollectDueSharedContracts(Long year, Long month,
 			LinkedHashMap<Long, LinkedHashMap<Long, Long[]>> invoiceDetailFullMap, List<InvoiceResume> resumes,
-			Boolean update) {
+			Boolean update, String module) {
 		System.out.println("Running getBillsToCollectDueSharedContracts");
-		List<ContractFE> contracts = contractFeRepository.findAll();
-		List<String> sharedContracts = contractFeRepository.getSharedContracts();
-		List<ContractFE> filteredContracts = contracts.stream()
+		List<? extends BaseContract> contracts = contractFactory.getModuleContracts(module);
+		List<String> sharedContracts = contractFactory.getSharedContracts(module);
+		List<? extends BaseContract> filteredContracts = contracts.stream()
 				.filter(contract -> sharedContracts.contains(contract.getContractId()) &&
 						contract.getBranch().getActive()).collect(Collectors.toList());
 
-		List<ContractFE> contractConsumers = contracts.stream().filter(contract -> contract.getSharedContract())
+		List<? extends BaseContract> contractConsumers = contracts.stream().filter(contract -> contract.getSharedContract())
 				.collect(Collectors.toList());
 
-		for (ContractFE contract : filteredContracts) {
+		for (BaseContract contract : filteredContracts) {
+			
 			System.out.println(contract.getContractId());
-			if (contract.getBranch().getClient().getNit().equals("860063161")) {
-				System.out.println("Stop");
-			}
 			LinkedHashMap<Long, Long[]> invoiceDetailMap = new LinkedHashMap<>();
 			PaymentType tempPlan = contract.getPaymentPlan();
 			Date contractDate = contract.getReferencePaymentDate();
 			
-			List<ContractFE> tempContracts = contractConsumers.stream()
+			List<? extends BaseContract> tempContracts = contractConsumers.stream()
 					.filter(c -> c.getSharedContractId().equalsIgnoreCase(contract.getContractId()))
 					.collect(Collectors.toList());
 			if (tempContracts != null) {
@@ -440,7 +447,8 @@ public class BillServiceImpl implements BillService {
 					tempBranches.add(c.getBranch().getBranchId());
 				});
 				Long issuedInvoices = 0L;
-				if (tempPlan.getDiscriminatorType() == 1 && tempPlan.getPaymentFrequency().getFrequencyId() == 8) {
+				if ((tempPlan.getDiscriminatorType() == 1 || tempPlan.getDiscriminatorType() == 4 || tempPlan.getDiscriminatorType() == 5) 
+						&& tempPlan.getPaymentFrequency().getFrequencyId() == 8) {
 					// Sumar las emitidas de ese año para cada una de las empresas que comparten el
 					// contrato
 					boolean chargeSubscription = false;
@@ -449,7 +457,6 @@ public class BillServiceImpl implements BillService {
 					calendar.set(year.intValue(), month.intValue() - 1, 1, 0, 0, 0);
 					dinamycCalendar.set(contractDate.getYear() + 1900, contractDate.getMonth(), contractDate.getDate(),
 							23, 59, 59);
-					// int lastDayOfMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
 					// Calcula vencimiento de la anualidad
 					if (calendar.get(Calendar.YEAR) > dinamycCalendar.get(Calendar.YEAR)) {
 						if (calendar.get(Calendar.MONTH) <= dinamycCalendar.get(Calendar.MONTH)) {
@@ -469,22 +476,14 @@ public class BillServiceImpl implements BillService {
 					if (chargeSubscription) {
 						calendar.set(year.intValue(), month.intValue() - 1, dinamycCalendar.get(Calendar.DATE));
 						contract.setReferencePaymentDate(calendar.getTime());
-						// calendar.add(Calendar.DATE, -1);
 					} else {
-						// calendar.set(year.intValue(), month.intValue() - 1, lastDayOfMonth);
 						calendar.set(year.intValue(), month.intValue(), 1);
 					}
 
 					for (Long branchId : tempBranches) {
-						issuedInvoices += invoiceRepository.getIssuedInvoicesDuringContract(branchId,
-								dinamycCalendar.getTime(), calendar.getTime());
+						issuedInvoices += contractFactory.getIssuedInvoicesDuringContract(module, branchId, dinamycCalendar.getTime(), calendar.getTime()); 
 					}
 					// Calcular las facturas emitidas del mes anterior
-
-					/*
-					 * calendar.add(Calendar.MONTH, -1); calendar.set(Calendar.DATE,
-					 * calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
-					 */
 
 					Boolean refill = false;
 					if (issuedInvoices > tempPlan.getDocumentQuantity()) {
@@ -496,7 +495,6 @@ public class BillServiceImpl implements BillService {
 								refill = true;
 								chargeSubscription = true;
 								
-								//------------------------------------------------------
 								Calendar endReferenceCalendar = Calendar.getInstance();
 								endReferenceCalendar.setTime(calendar.getTime());
 								endReferenceCalendar.add(Calendar.DATE, 1);
@@ -511,8 +509,7 @@ public class BillServiceImpl implements BillService {
 								    System.out.println(date);
 								    Long tempDocsCount = 0L;
 								    for (Long branchId : tempBranches) {
-								    	tempDocsCount += invoiceRepository.getIssuedInvoicesDuringContract(branchId,
-												dinamycCalendar.getTime(), date);
+								    	tempDocsCount += contractFactory.getIssuedInvoicesDuringContract(module, branchId, dinamycCalendar.getTime(), date);
 									}
 								    
 								    if (tempDocsCount > tempPlan.getDocumentQuantity()) {
@@ -525,17 +522,14 @@ public class BillServiceImpl implements BillService {
 								    	endReferenceCalendar.setTime(date);
 								    }
 								}
-								//------------------------------------------------------
 							}
 						}
-						
 					}
 					calendar.set(year.intValue(), month.intValue() - 1, 1);
 					
 					Long issuedDocsLastMonth = 0L;
 					for (Long branchId : tempBranches) {
-						issuedDocsLastMonth += invoiceRepository.getIssuedInvoicesDuringContract(branchId,
-								dinamycCalendar.getTime(), calendar.getTime());
+						issuedDocsLastMonth += contractFactory.getIssuedInvoicesDuringContract(module, branchId, dinamycCalendar.getTime(), calendar.getTime());
 					}
 					
 					invoiceDetailMap = tempPlan.getAnnualBillDetail(issuedInvoices, issuedDocsLastMonth,
@@ -555,21 +549,21 @@ public class BillServiceImpl implements BillService {
 			
 			if (update) {
 				try {
-					contractFeRepository.save(contract);
+					contractFactory.saveContract(contract);
 				} catch (Exception e) {
 					System.out.println("Hubo un error al actualizar el contrato " + contract.getContractId());
 				}
 			}
 			
 			addMoreDetailsToPay(year, month, contract.getBranch().getBranchId(), contract, invoiceDetailMap,
-					invoiceDetailFullMap, update);
+					invoiceDetailFullMap, update, module);
 		}
 
 	}
 
-	public void addMoreDetailsToPay(Long year, Long month, Long branchId, ContractFE contract,
+	public void addMoreDetailsToPay(Long year, Long month, Long branchId, BaseContract contract,
 			LinkedHashMap<Long, Long[]> invoiceDetailMap,
-			LinkedHashMap<Long, LinkedHashMap<Long, Long[]>> invoiceDetailFullMap, Boolean update) {
+			LinkedHashMap<Long, LinkedHashMap<Long, Long[]>> invoiceDetailFullMap, Boolean update, String module) {
 		Alliance alliance = contract.getBranch().getClient().getAlliance();
 		Date contractDate = contract.getContractDate();
 		
@@ -586,7 +580,7 @@ public class BillServiceImpl implements BillService {
 			contract.setImplementationAlreadyPaid(true);
 			if (update) {
 				try {
-					contractFeRepository.save(contract);
+					contractFactory.saveContract(contract);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -594,24 +588,26 @@ public class BillServiceImpl implements BillService {
 		}
 
 		// Cobro de mantenimiento vencido de ese periodo
-		if (!contract.getSharedMaintenance()) {
-			if (contractDate.getYear() + 1900 < year) {
-				if (contractDate.getMonth() + 1 == month) {
-					Long[] valueXQuantity = { 1L, contract.getMaintenanceType().getMaintenanceCost() };
-					invoiceDetailMap.put(196L, valueXQuantity);
+		if (contract instanceof ContractFE) {
+			if (!((ContractFE)contract).getSharedMaintenance()) {
+				if (contractDate.getYear() + 1900 < year) {
+					if (contractDate.getMonth() + 1 == month) {
+						Long[] valueXQuantity = { 1L, ((ContractFE)contract).getMaintenanceType().getMaintenanceCost() };
+						invoiceDetailMap.put(196L, valueXQuantity);
+					}
 				}
-			}
 
-			// Cobro de mantenimiento vencido de periodos pasados
-			if (contract.getMaintenanceAlreadyPaid() == false) {
-				Long[] valueXQuantity = { 1L, contract.getMaintenanceType().getMaintenanceCost() };
-				invoiceDetailMap.put(200L, valueXQuantity);
-				contract.setMaintenanceAlreadyPaid(true);
-				if (update) {
-					try {
-						contractFeRepository.save(contract);
-					} catch (Exception e) {
-						e.printStackTrace();
+				// Cobro de mantenimiento vencido de periodos pasados
+				if (((ContractFE)contract).getMaintenanceAlreadyPaid() == false) {
+					Long[] valueXQuantity = { 1L, ((ContractFE)contract).getMaintenanceType().getMaintenanceCost() };
+					invoiceDetailMap.put(200L, valueXQuantity);
+					((ContractFE)contract).setMaintenanceAlreadyPaid(true);
+					if (update) {
+						try {
+							contractFeRepository.save(((ContractFE)contract));
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
 					}
 				}
 			}
@@ -623,12 +619,12 @@ public class BillServiceImpl implements BillService {
 	}
 
 	public void saveBills(Long year, Long month, LinkedHashMap<Long, LinkedHashMap<Long, Long[]>> invoiceDetailFullMap,
-			Boolean save) {
+			Boolean save, String module) {
 		System.out.println("Running saveBills");
 		this.tempBillProducts = new ArrayList<>();
 		Calendar calendar = null;
 		Bill bill = null;
-		ContractFE tempContract = null;
+		BaseContract tempContract = null;
 		BillProduct billProduct = null;
 		for (Map.Entry<Long, LinkedHashMap<Long, Long[]>> invoiceDetailMap : invoiceDetailFullMap.entrySet()) {
 			calendar = Calendar.getInstance();
@@ -651,7 +647,7 @@ public class BillServiceImpl implements BillService {
 						billRepository.save(bill);
 						System.out.println("Saved " + bill.getBillId() + ", " + bill.getDescription());
 						InvoiceResume row = invoiceResumeRepository.findByBranchYearMonth(invoiceDetailMap.getKey(), year,
-								month);
+								month, module);
 						if (row != null) {
 							row.setBill(bill);
 							invoiceResumeRepository.save(row);
@@ -713,7 +709,7 @@ public class BillServiceImpl implements BillService {
 		return invoiceDetailMap;
 	}
 
-	public String generateInvoiceDescription(Long year, Long month, ContractFE contract,
+	public String generateInvoiceDescription(Long year, Long month, BaseContract contract,
 			LinkedHashMap<Long, Long[]> invoiceDetailMap) {
 		cleanDetailMap(invoiceDetailMap);
 		String description = "";
@@ -796,14 +792,14 @@ public class BillServiceImpl implements BillService {
 
 	@Override
 	@Transactional(propagation = Propagation.REQUIRED, readOnly = true, noRollbackFor = Exception.class, transactionManager = "primaryTransactionManager")
-	public Object[] generateFaceldiFile(Long year, Long month, String simulation) {
+	public Object[] generateFaceldiFile(Long year, Long month, String simulation, String module) {
 		System.out.println("Running generateFaceldiFile");
 		List<String> rowLines = new ArrayList<>();
 		if (!simulation.equalsIgnoreCase("S")) {
 			List<Bill> bills = billRepository.getFaceldiReport(year, month);
 			bills.forEach(bill -> {
 				Branch branch = bill.getBranch();
-				ContractFE contract = contractFeRepository.findByBranchId(bill.getBranch().getBranchId());
+				BaseContract contract = contractFactory.getContractByBranch(module, bill.getBranch().getBranchId());
 				List<BillProduct> billProducts = billProductRepository.getByBillId(bill.getBillId());
 				billProducts.forEach(billProduct -> {
 					FaceldiReportRow row = new FaceldiReportRow();
@@ -853,7 +849,7 @@ public class BillServiceImpl implements BillService {
 		} else {
 			this.tempBillProducts.forEach(billProduct -> {
 				FaceldiReportRow row = new FaceldiReportRow();
-				ContractFE contract = contractFeRepository.findByBranchId(billProduct.getBill().getBranch().getBranchId());
+				BaseContract contract = contractFactory.getContractByBranch(module, billProduct.getBill().getBranch().getBranchId());
 				row.setFcConsecutivo(billProduct.getBill().getBillNumber());
 				row.setFcFechaDocumento(billProduct.getBill().getCreationDate());
 				row.setFcFechaVencimiento(billProduct.getBill().getExpirationDate());
@@ -901,7 +897,7 @@ public class BillServiceImpl implements BillService {
 
 	@Override
 	@Transactional(propagation = Propagation.REQUIRED, readOnly = true, noRollbackFor = Exception.class, transactionManager = "primaryTransactionManager")
-	public Object[] generateSmartFile(Long year, Long month, String simulation) {
+	public Object[] generateSmartFile(Long year, Long month, String simulation, String module) {
 		System.out.println("Running generateSmartFile");
 		List<String> rowLines = new ArrayList<>();
 		if (!simulation.equalsIgnoreCase("S")) {
@@ -983,5 +979,4 @@ public class BillServiceImpl implements BillService {
 		}
 		return rowLines.toArray();
 	}
-
 }

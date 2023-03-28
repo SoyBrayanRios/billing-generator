@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,8 +28,8 @@ public class InvoiceResumeServiceImpl implements InvoiceResumeService {
 	private InvoiceRepository invoiceRepository;
 
 	@Override
-	public InvoiceResume getInvoiceResumeRow(Long branchId, Long year, Long month) {
-		return invoiceResumeRepository.findByBranchYearMonth(branchId, year, month);
+	public InvoiceResume getInvoiceResumeRow(Long branchId, Long year, Long month, String module) {
+		return invoiceResumeRepository.findByBranchYearMonth(branchId, year, month, module);
 	}
 
 	@Override
@@ -43,21 +44,27 @@ public class InvoiceResumeServiceImpl implements InvoiceResumeService {
 
 
 	@Override
-	public List<InvoiceResume> getInvoiceResumeRowByYearMonth(Long year, Long month) {
-		return invoiceResumeRepository.findByYearMonth(year, month);
+	public List<InvoiceResume> getInvoiceResumeRowByYearMonth(Long year, Long month, String module) {
+		return invoiceResumeRepository.findByYearMonthModule(year, month, module);
 	}
 	
 	@Override
-	public List<InvoiceResume> getAllResumes() {
+	public List<InvoiceResume> getAllResumes(String module) {
+		String[] fE = {"FV", "NC", "FE", "FCD", "FCF", "ND"};
+		String[] dS = {"DS", "NAS"};
+		String[] nE = {"NI", "NIA"};
 		List<Invoice> invoices = invoiceRepository.getInvoicesToCount();
+		List<Invoice> filteredInvoices = invoices.stream().filter(i -> Arrays.asList(
+				module.equals("FE") ? fE : module.equals("DS") ? dS : nE)
+				.contains(i.getDocumentType())).collect(Collectors.toList());
 
-		if (invoices != null) {
-			invoices.forEach(invoice -> {
+		if (filteredInvoices != null) {
+			filteredInvoices.forEach(invoice -> {
 				Date tempDate = Optional.ofNullable(invoice.getIssuedDate()).orElse(new Date("1999/12/31"));
 				Long year = new Long(tempDate.getYear() + 1900);
 				Long month = new Long(tempDate.getMonth() + 1);
 				InvoiceResume invoiceResume = getInvoiceResumeRow(invoice.getBranch().getBranchId(), 
-						year, month);
+						year, month, module);
 				if (invoice.getCounted() == false) {
 					if (invoiceResume == null) {
 						invoiceResume = new InvoiceResume();
@@ -86,10 +93,10 @@ public class InvoiceResumeServiceImpl implements InvoiceResumeService {
 	}
 
 	@Override
-	public List<String[]> orderResumesToTable(Long year) {
+	public List<String[]> orderResumesToTable(Long year, String module) {
 		LinkedHashMap<Long, LinkedHashMap<Long, String[]>> response = new LinkedHashMap<>();
 		List<String[]> list = new ArrayList<>();
-		this.getAllResumes().stream().filter(resume -> resume.getYear() == year.longValue()).forEach(resume -> {
+		this.getAllResumes(module).stream().filter(resume -> resume.getYear() == year.longValue()).forEach(resume -> {
 			Branch tempBranch = resume.getBranch();
 			LinkedHashMap<Long, String[]> tempResume = Optional.ofNullable(response.get(tempBranch.getBranchId())).orElse(null);
 			if (tempResume != null) {

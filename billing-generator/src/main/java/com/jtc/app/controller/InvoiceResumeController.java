@@ -20,29 +20,30 @@ public class InvoiceResumeController {
 	@Autowired
 	private InvoiceResumeService invoiceResumeService;
 	
-	@GetMapping("/all")
-	public List<InvoiceResume> getAllResumes() {
-		return invoiceResumeService.getAllResumes();
+	@GetMapping("/all/{module}")
+	public List<InvoiceResume> getAllResumes(@PathVariable("module") String module) {
+		return invoiceResumeService.getAllResumes(module);
 	}
 	
-	@GetMapping("/u")
-	public List<InvoiceResume> updateInvoiceResumes() {
-		return invoiceResumeService.getAllResumes();
+	@GetMapping("/u/{module}")
+	public List<InvoiceResume> updateInvoiceResumes(@PathVariable("module") String module) {
+		return invoiceResumeService.getAllResumes(module);
 	}
 	
-	@GetMapping("/{branchId}/{year}/{month}")
-	public InvoiceResume getInvoiceResumeRow(@PathVariable("branchId") Long branchId, @PathVariable("year") Long year, @PathVariable("month") Long month) {
-		return invoiceResumeService.getInvoiceResumeRow(branchId, year, month);
+	@GetMapping("/{branchId}/{year}/{month}/{module}")
+	public InvoiceResume getInvoiceResumeRow(@PathVariable("branchId") Long branchId, @PathVariable("year") Long year, 
+			@PathVariable("month") Long month, @PathVariable("module") String module) {
+		return invoiceResumeService.getInvoiceResumeRow(branchId, year, month, module);
 	}
 	
-	@GetMapping("/count/{year}/{month}")
-	public Integer getInvoiceResumeCount(@PathVariable("year") Long year, @PathVariable("month") Long month) {
-		return invoiceResumeService.getInvoiceResumeRowByYearMonth(year, month).size();
+	@GetMapping("/count/{year}/{month}/{module}")
+	public Integer getInvoiceResumeCount(@PathVariable("year") Long year, @PathVariable("month") Long month, @PathVariable("module") String module) {
+		return invoiceResumeService.getInvoiceResumeRowByYearMonth(year, month, module).size();
 	}
 	
-	@GetMapping("/data-table/{year}")
-	public List<String[]> orderResumesToTable(@PathVariable("year") Long year) {
-		return invoiceResumeService.orderResumesToTable(year);
+	@GetMapping("/data-table/{year}/{module}")
+	public List<String[]> orderResumesToTable(@PathVariable("year") Long year, @PathVariable("module") String module) {
+		return invoiceResumeService.orderResumesToTable(year, module);
 	}
 	
 }

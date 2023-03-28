@@ -13,9 +13,9 @@ public interface BillService {
 	public void deleteBill(Long billId);
 	public Bill getBillById(Long billId);
 	public List<Bill> getFaceldiReport(Long year, Long month);
-	public JsonResponse generateBills(Long year, Long month, Long invoiceNumber, String environment);
-	public Object[] generateTestBills(Long year, Long month, Long invoiceNumber);
-	public Object[] generateFaceldiFile(Long year, Long month, String simulation);
-	public Object[] generateSmartFile(Long year, Long month, String simulation);
+	public JsonResponse generateBills(Long year, Long month, Long invoiceNumber, String environment, String module);
+	public Object[] generateTestBills(Long year, Long month, Long invoiceNumber, String module);
+	public Object[] generateFaceldiFile(Long year, Long month, String simulation, String module);
+	public Object[] generateSmartFile(Long year, Long month, String simulation, String module);
 	public Object[] getSmartFile();
 }

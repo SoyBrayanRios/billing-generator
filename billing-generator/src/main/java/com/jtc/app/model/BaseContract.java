@@ -21,7 +21,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Getter
 @Setter
-public class BaseContract {
+public abstract class BaseContract {
 	
 	@Id
 	@Column(name = "contract_id")
@@ -38,8 +38,14 @@ public class BaseContract {
 	private Boolean ipcIncrease;
 	@Column(name = "first_issue_date")
 	private Date firstIssueDate;
+	@Column(name = "implementation_cost")
+	private Long implementationCost;
+	@Column(name = "implementation_already_paid")
+	private Boolean implementationAlreadyPaid;
 	@Column(name = "prepaid")
 	private Boolean prepaid;
+	@Column(name = "reference_payment_date")
+	private Date referencePaymentDate;
 	@ManyToOne
 	@JoinColumn(name = "payment_plan", nullable = true)
 	private PaymentType paymentPlan;

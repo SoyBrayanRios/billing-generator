@@ -8,6 +8,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.jtc.app.builder.ContractFactory;
 import com.jtc.app.primary.dao.BranchRepository;
 import com.jtc.app.primary.dao.InvoiceRepository;
 import com.jtc.app.primary.entity.Invoice;
@@ -51,8 +52,18 @@ public class InvoiceServiceImpl implements InvoiceService {
 	}
 	
 	@Override
-	public Long getIssuedInvoicesDuringContract(Long branchId, Date startDate, Date limitDate) {
-		return invoiceRepository.getIssuedInvoicesDuringContract(branchId, startDate, limitDate);
+	public Long getFeIssuedInvoicesDuringContract(Long branchId, Date startDate, Date limitDate) {
+		return invoiceRepository.getFeIssuedInvoicesDuringContract(branchId, startDate, limitDate);
+	}
+	
+	@Override
+	public Long getDsIssuedInvoicesDuringContract(Long branchId, Date startDate, Date limitDate) {
+		return invoiceRepository.getDsIssuedInvoicesDuringContract(branchId, startDate, limitDate);
+	}
+	
+	@Override
+	public Long getNeIssuedInvoicesDuringContract(Long branchId, Date startDate, Date limitDate) {
+		return invoiceRepository.getNeIssuedInvoicesDuringContract(branchId, startDate, limitDate);
 	}
 
 	@Override
@@ -123,17 +134,21 @@ public class InvoiceServiceImpl implements InvoiceService {
 	}
 
 	@Override
-	public Long getIssuedInvoicesDuringContract(Long branchId, String startDate, String limitDate) {
+	public Long getIssuedInvoicesDuringContract(Long branchId, String startDate, String limitDate, String module) {
+		ContractFactory contractFactory = new ContractFactory();
 		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 		Date date1 = null;
 		Date date2 = null;
 		try {
-			date1 = formatter.parse(limitDate);
-			date2 = formatter.parse(startDate);
+			//date1 = formatter.parse(limitDate);
+			//date2 = formatter.parse(startDate);
+			date1 = formatter.parse(startDate);
+			date2 = formatter.parse(limitDate);
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
-		return invoiceRepository.getIssuedInvoicesDuringContract(branchId, date1, date2);
+		
+		return contractFactory.getIssuedInvoicesDuringContract(module, branchId, date1, date2);
 	}
 
 }

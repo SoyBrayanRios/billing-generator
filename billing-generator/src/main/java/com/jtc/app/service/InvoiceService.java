@@ -12,9 +12,11 @@ public interface InvoiceService {
 	public Invoice getInvoiceByBranchNumber(Long branchId, String invoiceNumber, Long buyerId, Date issuedDate);
 	public void deleteInvoice(Long invoiceId);
 	public void updateById(Long invoiceId) throws Exception;
-	public Long getIssuedInvoicesDuringContract(Long branchId, Date startDate, Date limitDate);
+	public Long getFeIssuedInvoicesDuringContract(Long branchId, Date startDate, Date limitDate);
+	public Long getDsIssuedInvoicesDuringContract(Long branchId, Date startDate, Date limitDate);
+	public Long getNeIssuedInvoicesDuringContract(Long branchId, Date startDate, Date limitDate);
 	public List<Invoice> getInvoicesToCount();
 	public List<Invoice> updateAllInvoices();
 	public List<Invoice> updateInvoicesByYearMonth(Long year, Long month);
-	public Long getIssuedInvoicesDuringContract(Long branchId, String startDate, String limitDate);
+	public Long getIssuedInvoicesDuringContract(Long branchId, String startDate, String limitDate, String module);
 }

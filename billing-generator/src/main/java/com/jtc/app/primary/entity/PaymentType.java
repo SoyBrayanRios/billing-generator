@@ -104,6 +104,7 @@ public class PaymentType {
 			valQuant[1] = this.documentPrice;
 			invoiceDetailMap.put(Long.parseLong(CONCEPTS[1][0]), valQuant);
 			if (this.mixedContract) {
+				valQuant = new Long[2];
 				valQuant[0] = 1L;
 				valQuant[1] = this.packagePrice;
 				invoiceDetailMap.put(Long.parseLong(CONCEPTS[2][0]), valQuant);
