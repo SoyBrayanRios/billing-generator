@@ -10,7 +10,7 @@ import lombok.Data;
 @Entity
 @Table(name = "sucursales")
 @Data
-public class FETransmitter {
+public class Transmitter {
 
 	@Id
 	@Column(name = "id_sucursal")

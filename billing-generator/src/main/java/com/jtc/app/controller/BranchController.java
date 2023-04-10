@@ -48,8 +48,8 @@ public class BranchController {
 		return branchService.updateAllBranches();
 	}
 	
-	@GetMapping("/to-update")
-	public List<Branch> getBranchesWithoutContract() {
-		return branchService.getBranchesWithoutContractByMonthYear();
+	@GetMapping("/to-update/{module}")
+	public List<Branch> getBranchesWithoutContract(@PathVariable("module") String module) {
+		return branchService.getBranchesWithoutContract(module);
 	}
 }

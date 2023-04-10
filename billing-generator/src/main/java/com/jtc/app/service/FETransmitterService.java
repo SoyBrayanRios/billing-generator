@@ -2,11 +2,11 @@ package com.jtc.app.service;
 
 import java.util.List;
 
-import com.jtc.app.secondary.entity.FETransmitter;
+import com.jtc.app.secondary.entity.Transmitter;
 
 public interface FETransmitterService {
 
-	public List<FETransmitter> getFETransmitters();
-	public List<FETransmitter> getFEActiveTransmitters();
-	public FETransmitter getTransmitterById(Long transmitterId);
+	public List<Transmitter> getFETransmitters();
+	public List<Transmitter> getFEActiveTransmitters();
+	public Transmitter getTransmitterById(Long transmitterId);
 }

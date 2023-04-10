@@ -8,7 +8,7 @@ public interface BranchService {
 	
 	public Branch saveBranch(Branch branch) throws Exception;
 	public List<Branch> getBranches();
-	public List<Branch> getBranchesWithoutContractByMonthYear();
+	public List<Branch> getBranchesWithoutContract(String module);
 	public Branch getBranchById(Long branchId);
 	public void deleteBranch(Long branchId);
 	public Branch findByClientId(String clientId);

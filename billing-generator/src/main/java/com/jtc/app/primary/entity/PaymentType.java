@@ -221,7 +221,7 @@ public class PaymentType {
 		return map.get("Nombre");
 	}
 	
-	public void generatePlanDescription() {
+	public void generateFePlanDescription() {
 		switch (this.discriminatorType) {
 			case 1:
 				if (this.packageName == null || this.packageName == "") {
@@ -249,6 +249,14 @@ public class PaymentType {
 				this.planDescription = "Cobro por rango de documentos emitidos en el mes"; break;
 			default:
 				this.planDescription = null;
+		}
+	}
+	
+	public void generateNePlanDescription(String description) {
+		if (this.paymentFrequency.getFrequencyId() == 4) {
+			this.planDescription = "Mensualidad fija " + description + " (" +  this.documentQuantity + ").";
+		} else {
+			this.planDescription = "Anualidad fija " + description + " (" +  this.documentQuantity + ").";
 		}
 	}
 	

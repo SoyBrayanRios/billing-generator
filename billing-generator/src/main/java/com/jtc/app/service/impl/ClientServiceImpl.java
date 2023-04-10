@@ -9,7 +9,9 @@ import com.jtc.app.primary.dao.AllianceRepository;
 import com.jtc.app.primary.dao.ClientRepository;
 import com.jtc.app.primary.entity.Client;
 import com.jtc.app.secondary.dao.FEClientRepository;
+import com.jtc.app.secondary.dao.NEClientRepository;
 import com.jtc.app.secondary.entity.FEClient;
+import com.jtc.app.secondary.entity.NEClient;
 import com.jtc.app.service.ClientService;
 
 @Service
@@ -19,6 +21,8 @@ public class ClientServiceImpl implements ClientService{
 	private ClientRepository clientRepository;
 	@Autowired
 	private FEClientRepository feClientRepository;
+	@Autowired
+	private NEClientRepository neClientRepository;
 	@Autowired
 	private AllianceRepository allianceRepository;
 	
@@ -52,6 +56,12 @@ public class ClientServiceImpl implements ClientService{
 
 	@Override
 	public List<Client> updateAllClients() {
+		updateFeClients();
+		updateNeClients();
+		return clientRepository.findAll();
+	}
+	
+	public void updateFeClients() {
 		List<FEClient> feClients = feClientRepository.getActiveFEClients();
 		feClients.forEach(client -> {
 			Client tempClient = clientRepository.findByNit(client.getNroIdentificacion());
@@ -88,7 +98,45 @@ public class ClientServiceImpl implements ClientService{
 				System.out.println("El cliente " + client.getNroIdentificacion() + " ya existe ");
 			}
 		});
-		return clientRepository.findAll();
+	}
+	
+	public void updateNeClients() {
+		List<NEClient> neClients = neClientRepository.getActiveNEClients();
+		neClients.forEach(client -> {
+			Client tempClient = clientRepository.findByNit(client.getNroIdentificacion());
+			if (tempClient == null) {
+				tempClient = new Client();
+				tempClient.setNit(client.getNroIdentificacion());
+				tempClient.setDV(client.getDigitoVerif());
+				tempClient.setTipoIdentificacion(client.getTipoIdentificacion());
+				tempClient.setTipoPersona(null);
+				tempClient.setRazonSocial(client.getRazonSocial());
+				tempClient.setTipoRegimen(null);
+				tempClient.setPrimerApellido(client.getPrimerNombre());
+				tempClient.setSegundoApellido(client.getSegundoNombre());
+				tempClient.setPrimerNombre(client.getPrimerApellido());
+				tempClient.setSegundoNombre(client.getSegundoApellido());
+				tempClient.setDepartamento(client.getDepartamento());
+				tempClient.setMunicipio(client.getMunicipio());
+				tempClient.setDireccion(client.getDireccion());
+				tempClient.setZonaPostal(null);
+				tempClient.setCorreoElectronico(client.getCorreoElectronico());
+				tempClient.setDocumentoEquivalente(null);
+				if (client.getAlianzaComercial() != null) {
+					tempClient.setAlliance(allianceRepository.getById(client.getAlianzaComercial()));					
+				} else {
+					tempClient.setAlliance(null);
+				}
+				try {
+					clientRepository.save(tempClient);
+					System.out.println("Se guardó con exito el cliente " + tempClient.getNit());
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			} else {
+				System.out.println("El cliente " + client.getNroIdentificacion() + " ya existe ");
+			}
+		});
 	}
 
 }

@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.jtc.app.secondary.dao.FETransmitterRepository;
-import com.jtc.app.secondary.entity.FETransmitter;
+import com.jtc.app.secondary.entity.Transmitter;
 import com.jtc.app.service.FETransmitterService;
 
 @Service
@@ -16,17 +16,17 @@ public class FETransmitterServiceImpl implements FETransmitterService{
 	private FETransmitterRepository feTransmitterRepository;
 
 	@Override
-	public List<FETransmitter> getFETransmitters() {
+	public List<Transmitter> getFETransmitters() {
 		return feTransmitterRepository.findAll();
 	}
 
 	@Override
-	public FETransmitter getTransmitterById(Long transmitterId) {
+	public Transmitter getTransmitterById(Long transmitterId) {
 		return feTransmitterRepository.getById(transmitterId);
 	}
 
 	@Override
-	public List<FETransmitter> getFEActiveTransmitters() {
+	public List<Transmitter> getFEActiveTransmitters() {
 		return feTransmitterRepository.getActiveFeTransmitters();
 	}
 	

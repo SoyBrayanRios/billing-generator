@@ -9,7 +9,7 @@ import com.jtc.app.primary.dao.BranchRepository;
 import com.jtc.app.primary.dao.ClientRepository;
 import com.jtc.app.primary.entity.Branch;
 import com.jtc.app.secondary.dao.FETransmitterRepository;
-import com.jtc.app.secondary.entity.FETransmitter;
+import com.jtc.app.secondary.entity.Transmitter;
 import com.jtc.app.service.BranchService;
 
 @Service
@@ -51,8 +51,10 @@ public class BranchServiceImpl implements BranchService {
 	}
 	
 	@Override
-	public List<Branch> getBranchesWithoutContractByMonthYear() {
-		return branchRepository.findBranchesWithoutContract();
+	public List<Branch> getBranchesWithoutContract(String module) {
+		return module.equalsIgnoreCase("FE") ? branchRepository.findBranchesWithoutContractFe() :
+			module.equalsIgnoreCase("DS") ? branchRepository.findBranchesWithoutContractDs() :
+				branchRepository.findBranchesWithoutContractNe();
 	}
 	
 	@Override
@@ -63,12 +65,14 @@ public class BranchServiceImpl implements BranchService {
 	@Override
 	public List<Branch> updateAllBranches() {
 		updateFeBranches();
-		//updateDsBranches();
+		updateNeBranches();
+		updateDsBranches();
 		return branchRepository.findAll();
 	}
 	
 	public void updateFeBranches() {
-		List<FETransmitter> feTransmitters = feTransmitterRepository.getActiveFeTransmitters();
+		System.out.println("Updating FE branches");
+		List<Transmitter> feTransmitters = feTransmitterRepository.getActiveFeTransmitters();
 		feTransmitters.forEach(transmitter -> {
 			Branch tempBranch = branchRepository.findByBranchId(transmitter.getIdSucursal());
 			if (tempBranch == null) {
@@ -112,7 +116,8 @@ public class BranchServiceImpl implements BranchService {
 	}
 	
 	public void updateDsBranches() {
-		List<FETransmitter> feTransmitters = feTransmitterRepository.getActiveDsTransmitters();
+		System.out.println("Updating DS branches");
+		List<Transmitter> feTransmitters = feTransmitterRepository.getActiveDsTransmitters();
 		feTransmitters.forEach(transmitter -> {
 			Branch tempBranch = branchRepository.findByBranchId(transmitter.getIdSucursal());
 			if (tempBranch == null) {
@@ -157,7 +162,8 @@ public class BranchServiceImpl implements BranchService {
 	
 	//TODO
 	public void updateNeBranches() {
-		List<FETransmitter> feTransmitters = feTransmitterRepository.getActiveFeTransmitters();
+		System.out.println("Updating NE branches");
+		List<Transmitter> feTransmitters = feTransmitterRepository.getActiveNeTransmitters();
 		feTransmitters.forEach(transmitter -> {
 			Branch tempBranch = branchRepository.findByBranchId(transmitter.getIdSucursal());
 			if (tempBranch == null) {
@@ -184,7 +190,17 @@ public class BranchServiceImpl implements BranchService {
 					e.printStackTrace();
 				}
 			} else {
-				System.out.println("La sucursal " + tempBranch.getBranchId() + " ya existe ");
+				if (!tempBranch.getNE()) {
+					tempBranch.setNE(true);
+					try {
+						branchRepository.save(tempBranch);
+						System.out.println("Se actualizó con éxito la sucursal " + tempBranch.getBranchId());
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				} else {
+					System.out.println("La sucursal " + tempBranch.getBranchId() + " ya existe para NE");					
+				}
 			}
 		});
 	}

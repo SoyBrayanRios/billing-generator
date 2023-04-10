@@ -58,7 +58,7 @@ public class ContractDSServiceImpl implements ContractDSService {
 			if (tempPlan.getPackageName() == "") {
 				tempPlan.setPackageName(null);
 			}
-			tempPlan.generatePlanDescription();
+			tempPlan.generateFePlanDescription();
 			paymentPlan = paymentTypeRepository.save(tempPlan);
 		}
 		// Save changes different from contract
@@ -193,7 +193,7 @@ public class ContractDSServiceImpl implements ContractDSService {
 							paymentType.setDocumentPrice(
 									(array[19] == "" || array[19] == null) ? 620L : Long.parseLong(array[19]));
 							paymentType.setPaymentFrequency(frequency);
-							paymentType.generatePlanDescription();
+							paymentType.generateFePlanDescription();
 							paymentType.setCostRange(paymentType.getSelfAdjusting() ? array[21] : null);
 							paymentType.setMixedContract(array[35].equalsIgnoreCase("Si") ? true : false);
 							try {
@@ -225,7 +225,7 @@ public class ContractDSServiceImpl implements ContractDSService {
 									(array[20] == "" || array[20] == null) ? 620L : Long.parseLong(array[20]));
 							paymentType.setPaymentFrequency(frequency);
 							paymentType.setCostRange(null);
-							paymentType.generatePlanDescription();
+							paymentType.generateFePlanDescription();
 							paymentType.setSelfAdjusting(array[34].equalsIgnoreCase("SI") ? true : false);
 							try {
 								// contract.setPaymentPlan(paymentType);
@@ -251,7 +251,7 @@ public class ContractDSServiceImpl implements ContractDSService {
 							paymentType.setDocumentPrice(0L);
 							paymentType.setPaymentFrequency(frequency);
 							paymentType.setCostRange(array[21]);
-							paymentType.generatePlanDescription();
+							paymentType.generateFePlanDescription();
 							paymentType.setSelfAdjusting(array[34].equalsIgnoreCase("Si") ? true : false);
 							paymentType.setMixedContract(array[35].equalsIgnoreCase("Si") ? true : false);
 							try {
