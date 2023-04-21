@@ -67,13 +67,7 @@ public class Branch {
 	private Client client;
 	@JsonIgnore
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "branch")
-	private Set<ContractFE> contractsFe;
-	@JsonIgnore
-	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "branch")
-	private Set<ContractNE> contractsNe;
-	@JsonIgnore
-	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "branch")
-	private Set<ContractDS> contractsDs;
+	private Set<Contract> contracts;
 	@JsonIgnore
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "branch")
 	private Set<InvoiceResume> invoicesQuantity;

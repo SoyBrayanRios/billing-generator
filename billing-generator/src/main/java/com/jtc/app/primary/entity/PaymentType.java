@@ -69,7 +69,7 @@ public class PaymentType {
 	private Boolean mixedContract;
 	@JsonIgnore
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "paymentPlan")
-	private Set<ContractFE> contracts;
+	private Set<Contract> contracts;
 	
 	public LinkedHashMap<Long, Long[]> getBillDetail(Long docQuantity) {
 		Long[] valQuant = new Long[2];

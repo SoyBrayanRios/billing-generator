@@ -8,7 +8,6 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.jtc.app.builder.ContractFactory;
 import com.jtc.app.primary.dao.BranchRepository;
 import com.jtc.app.primary.dao.InvoiceRepository;
 import com.jtc.app.primary.entity.Invoice;
@@ -135,7 +134,6 @@ public class InvoiceServiceImpl implements InvoiceService {
 
 	@Override
 	public Long getIssuedInvoicesDuringContract(Long branchId, String startDate, String limitDate, String module) {
-		ContractFactory contractFactory = new ContractFactory();
 		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 		Date date1 = null;
 		Date date2 = null;
@@ -148,7 +146,11 @@ public class InvoiceServiceImpl implements InvoiceService {
 			e.printStackTrace();
 		}
 		
-		return contractFactory.getIssuedInvoicesDuringContract(module, branchId, date1, date2);
+		return module.equals("FE") ? invoiceRepository.getFeIssuedInvoicesDuringContract(
+				branchId, date1, date2) : module.equals("DS") ? 
+						invoiceRepository.getDsIssuedInvoicesDuringContract(branchId, date1, date2) :
+								invoiceRepository.getNeIssuedInvoicesDuringContract(branchId, date1, date2);
+				//contractFactory.getIssuedInvoicesDuringContract(module, branchId, date1, date2);
 	}
 
 }
