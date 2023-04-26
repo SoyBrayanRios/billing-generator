@@ -35,6 +35,11 @@ public class FEInvoiceServiceImpl implements FEInvoiceService{
 	public Date getFirstIssuedDate(Long branchId) {
 		return feInvoiceRepository.getFirstIssuedDate(branchId);
 	}
+	
+	@Override
+	public Date getFirstIssuedDateDs(Long branchId) {
+		return feInvoiceRepository.getFirstIssuedDateDs(branchId);
+	}
 
 	@Override
 	public List<FEInvoice> getIssuedInvoicesByYearMonth(Long year, Long month) {

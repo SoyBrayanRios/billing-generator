@@ -128,8 +128,8 @@ public class ContractServiceImpl implements ContractService {
 					 * if (i == 21 && fields[i] != null && fields[i] != "") { fields[i] =
 					 * fields[i].substring(1, fields[i].length() - 1); }
 					 */
-					if ((i == 11 || i == 17 || i == 19 || i == 20 || i == 21 || i == 22 || i == 25)
-							&& fields[i] != null && fields[i] != "") {
+					if ((i == 11 || i == 17 || i == 19 || i == 20 || i == 21 || i == 22 || i == 24) && fields[i] != null
+							&& fields[i] != "") {
 						fields[i] = fields[i].replace("$", "");
 						fields[i] = fields[i].replace(".", "");
 					}
@@ -191,9 +191,9 @@ public class ContractServiceImpl implements ContractService {
 					// Get payment
 					if (array[12].equalsIgnoreCase("Bolsa de documentos")
 							|| array[12].equalsIgnoreCase("Por paquete de documentos")) {
-						if (array[15] != "" || array[15] != null) {
+						/*if (array[15] != "" || array[15] != null) {
 							paymentType = getPaymentTypeByName(array[15]);
-						}
+						}*/
 						Long id = 0L;
 						if (array[18].equalsIgnoreCase("Mensual")) {
 							id = 4L;
@@ -201,14 +201,14 @@ public class ContractServiceImpl implements ContractService {
 							id = 8L;
 						}
 						Frequency frequency = frequencyService.getFrequencyById(id);
-						if (paymentType == null) {
-							paymentType = paymentTypeRepository.findPackageByParams(1,
-									array[34].equalsIgnoreCase("SI") ? array[21] : "", array[15],
-									Integer.parseInt(array[16]), Long.parseLong(array[17]),
-									(array[19] == "" || array[19] == null) ? 620L : Long.parseLong(array[19]),
-									frequency, "FE", array[35].equalsIgnoreCase("Si") ? true : false,
-									array[34].equalsIgnoreCase("SI") ? true : false);
-						}
+						
+						paymentType = paymentTypeRepository.findPackageByParams(1,
+								array[34].equalsIgnoreCase("SI") ? array[21] : "", array[15],
+								Integer.parseInt(array[16]), Long.parseLong(array[17]),
+								(array[19] == "" || array[19] == null) ? 620L : Long.parseLong(array[19]),
+								frequency, "FE", array[35].equalsIgnoreCase("Si") ? true : false,
+								array[34].equalsIgnoreCase("SI") ? true : false);
+						
 						if (paymentType == null) {
 							paymentType = new PaymentType();
 							paymentType.setSelfAdjusting(array[34].equalsIgnoreCase("SI") ? true : false);
@@ -341,7 +341,7 @@ public class ContractServiceImpl implements ContractService {
 		});
 		return contracts;
 	}
-	
+
 	public List<Contract> saveNeContractsFromFile(String filePath) {
 		List<Contract> contracts = new ArrayList<>();
 		List<String[]> tempArray = this.getArrayFromFile(filePath);
@@ -355,12 +355,16 @@ public class ContractServiceImpl implements ContractService {
 				contract.setModule("NE");
 				Branch branch = branchRepository.findByBranchId(Long.parseLong(array[3]));
 				PaymentType paymentType = null;
-				
+
 				contract.setBranch(branch);
 				contract.setContractId(array[6]);
 				try {
 					contract.setContractDate(formatter.parse(array[7]));
-					contract.setReferencePaymentDate(array[36] != null && array[36] != "" ? formatter.parse(array[36]): null);
+					if (array[30].equals("Habilitación")) {
+						contract.setReferencePaymentDate(formatter.parse(array[28]));
+					} else {
+						contract.setReferencePaymentDate(formatter.parse(array[29]));
+					}
 				} catch (ParseException e1) {
 					e1.printStackTrace();
 				}
@@ -376,67 +380,193 @@ public class ContractServiceImpl implements ContractService {
 				contract.setFirstMonthFree(array[13].equalsIgnoreCase("Si") ? true : false);
 				contract.setDiscountSecondYear(array[14] != null && array[14] != "" ? Long.parseLong(array[14]) : 0L);
 				try {
-					contract.setQualificationDate(array[29] != "" && array[29] != null ? formatter.parse(array[29]) : null);
-				} catch(Exception e) {
+					contract.setQualificationDate(
+							array[28] != "" && array[28] != null ? formatter.parse(array[28]) : null);
+				} catch (Exception e) {
 					contract.setQualificationDate(null);
 					e.printStackTrace();
 				}
 				// Validate if it is a shared contract
-				if (array[13].equalsIgnoreCase("Si")) {
+				if (array[16].equalsIgnoreCase("Si")) {
 					contract.setSharedContractId(array[17]);
 				} else {
 					contract.setSharedContractId(null);
 					// Get payment
-					if (array[12].equalsIgnoreCase("Por paquete de empleados")) {
+
+					Long id = 0L;
+					if (array[22].equalsIgnoreCase("Mensual")) {
+						id = 4L;
+					} else {
+						id = 8L;
+					}
+
+					Frequency frequency = frequencyService.getFrequencyById(id);
+
+					paymentType = paymentTypeRepository.findPackageByParams(4, null, array[18],
+							Integer.parseInt(array[20]), Long.parseLong(array[21]),
+							(array[24] == "" || array[24] == null) ? 520L : Long.parseLong(array[24]), frequency, "NE",
+							false, false);
+
+					if (paymentType == null) {
+						paymentType = new PaymentType();
+						paymentType.setDiscriminatorType(4);
+						paymentType.setModulePlan("NE");
+						paymentType.setPackageName(array[18] != null ? array[18] : null);
+						paymentType.setDocumentQuantity(Integer.parseInt(array[20]));
+						paymentType.setPackagePrice(Long.parseLong(array[21]));
+						paymentType.setDocumentPrice(
+								(array[24] == "" || array[24] == null) ? 520L : Long.parseLong(array[24]));
+						paymentType.setPaymentFrequency(frequency);
+						paymentType.generateNePlanDescription(null);
+						paymentType.setCostRange(null);
+						paymentType.setMixedContract(false);
+						paymentType.setSelfAdjusting(false);
+						try {
+							contract.setPaymentPlan(paymentType);
+							// contract.setPaymentPlan(paymentTypeRepository.save(paymentType));
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					} else {
+						contract.setPaymentPlan(paymentType);
+					}
+				}
+
+				try {
+					// contractRepository.save(contract);
+					System.out.println("Se guardó el contrato " + array[6] + " correctamente.");
+					System.out.println(contract.toString());
+				} catch (Exception e) {
+					System.out.println("Hubo un error al intentar guardar el contrato " + array[6] + " - " + array[1]);
+					e.printStackTrace();
+				}
+			} else {
+				System.out.println("El contrato " + array[6] + " ya está registrado en el sistema.");
+			}
+			contracts.add(contract);
+		});
+		return contracts;
+	}
+	
+	public List<Contract> saveDsContractsFromFile(String filePath) {
+		List<Contract> contracts = new ArrayList<>();
+		List<String[]> tempArray = this.getArrayFromFile(filePath);
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+		tempArray.forEach(array -> {
+			// Get branch by nit
+			Contract contract = contractRepository.getContractById(array[6]);
+
+			if (contract == null) {
+				contract = new Contract();
+				contract.setModule("DS");
+				Branch branch = branchRepository.findByBranchId(Long.parseLong(array[3]));
+				PaymentType paymentType = null;
+
+				contract.setBranch(branch);
+				contract.setContractId(array[6]);
+				try {
+					contract.setContractDate(formatter.parse(array[7]));
+					contract.setReferencePaymentDate(formatter.parse(array[7]));
+				} catch (ParseException e1) {
+					e1.printStackTrace();
+				}
+
+				contract.setFirstIssueDate(feInvoiceService.getFirstIssuedDateDs(branch.getBranchId()));
+				contract.setCreatedBy(array[8]);
+				contract.setIpcIncrease(array[9].equalsIgnoreCase("Si") ? true : false);
+				contract.setImplementationCost(array[11] != null ? Long.parseLong(array[11]) : 0L);
+				contract.setImplementationAlreadyPaid(array[31].equalsIgnoreCase("No") ? true : false);
+				contract.setSharedContract(array[13].equalsIgnoreCase("Si") ? true : false);
+				contract.setPrepaid(false);
+				
+				// Validate if it is a shared contract
+				if (array[13].equalsIgnoreCase("Si")) {
+					contract.setSharedContractId(array[14]);
+				} else {
+					contract.setSharedContractId(null);
+					// Get payment
+					if (array[12].equalsIgnoreCase("Por paquete de documentos")) {
 						Long id = 0L;
-						if (array[22].equalsIgnoreCase("Mensual")) {
+						if (array[18].equalsIgnoreCase("Mensual")) {
 							id = 4L;
 						} else {
 							id = 8L;
 						}
-
 						Frequency frequency = frequencyService.getFrequencyById(id);
-
-						paymentType = paymentTypeRepository.findPackageByParams(4, null, array[18],
-								Integer.parseInt(array[20]), Long.parseLong(array[21]),
-								(array[25] == "" || array[25] == null) ? 520L : Long.parseLong(array[25]), frequency,
-								"NE", false, false);
-
+						
+						paymentType = paymentTypeRepository.findPackageByParams(5,
+								array[34].equalsIgnoreCase("SI") ? array[21] : "", array[15],
+								Integer.parseInt(array[16]), Long.parseLong(array[17]),
+								(array[19] == "" || array[19] == null) ? 620L : Long.parseLong(array[19]),
+								frequency, "FE", array[35].equalsIgnoreCase("Si") ? true : false,
+								array[34].equalsIgnoreCase("SI") ? true : false);
+						
 						if (paymentType == null) {
 							paymentType = new PaymentType();
-							paymentType.setDiscriminatorType(4);
-							paymentType.setModulePlan("NE");
-							paymentType.setPackageName(array[18] != null ? array[18] : null);
-							paymentType.setDocumentQuantity(Integer.parseInt(array[20]));
-							paymentType.setPackagePrice(Long.parseLong(array[21]));
+							paymentType.setSelfAdjusting(array[34].equalsIgnoreCase("SI") ? true : false);
+							paymentType.setDiscriminatorType(1);
+							paymentType.setModulePlan("FE");
+							paymentType.setPackageName(paymentType.getSelfAdjusting() ? array[15] : null);
+							paymentType.setDocumentQuantity(Integer.parseInt(array[16]));
+							paymentType.setPackagePrice(Long.parseLong(array[17]));
 							paymentType.setDocumentPrice(
-									(array[25] == "" || array[25] == null) ? 520L : Long.parseLong(array[25]));
+									(array[19] == "" || array[19] == null) ? 620L : Long.parseLong(array[19]));
 							paymentType.setPaymentFrequency(frequency);
-							paymentType.generateNePlanDescription(array[19].toLowerCase());
-							paymentType.setCostRange(null);
-							paymentType.setMixedContract(false);
-							paymentType.setSelfAdjusting(false);
+							paymentType.generateFePlanDescription();
+							paymentType.setCostRange(paymentType.getSelfAdjusting() ? array[21] : null);
+							paymentType.setMixedContract(array[35].equalsIgnoreCase("Si") ? true : false);
 							try {
-								contract.setPaymentPlan(paymentType);
-								//contract.setPaymentPlan(paymentTypeRepository.save(paymentType));
+								// contract.setPaymentPlan(paymentType);
+								contract.setPaymentPlan(paymentTypeRepository.save(paymentType));
 							} catch (Exception e) {
 								e.printStackTrace();
 							}
 						} else {
 							contract.setPaymentPlan(paymentType);
 						}
-					} else {
-						System.out.println("Tiene otro tipo de payment_plan");
 					}
 				}
 
+				// Set maintenance
+				// Validate if it is a shared maintenance
+				if (array[26].equalsIgnoreCase("No")) {
+					Long id = 0L;
+					if (array[23].equalsIgnoreCase("Mensual")) {
+						id = 4L;
+					} else {
+						id = 8L;
+					}
+					Frequency frequency = frequencyService.getFrequencyById(id);
+					Maintenance maintenance = maintenanceRepository
+							.getMaintenanceByCostFrequency(Long.parseLong(array[22]), frequency);
+					if (maintenance == null) {
+						try {
+							maintenance = new Maintenance();
+							maintenance.setMaintenanceCost(Long.parseLong(array[22]));
+							maintenance.setMaintenanceFrequency(frequency);
+							// contract.setMaintenanceType(maintenance);
+							contract.setMaintenanceType(maintenanceRepository.save(maintenance));
+							contract.setMaintenanceAlreadyPaid(array[25].equalsIgnoreCase("Si") ? false : true);
+							contract.setSharedMaintenance(false);
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					} else {
+						contract.setMaintenanceType(maintenance);
+						contract.setMaintenanceAlreadyPaid(array[25].equalsIgnoreCase("Si") ? false : true);
+						contract.setSharedMaintenance(false);
+					}
+				} else {
+					contract.setMaintenanceType(null);
+					contract.setMaintenanceAlreadyPaid(false);
+					contract.setSharedMaintenance(true);
+				}
 				try {
-					//contractRepository.save(contract);
+					contractRepository.save(contract);
 					System.out.println("Se guardó el contrato " + array[6] + " correctamente.");
-					System.out.println(contract.toString());
 				} catch (Exception e) {
-					System.out.println("Hubo un error al intentar guardar el contrato " + array[6] + " - " + array[1]);
 					e.printStackTrace();
+					System.out.println("Hubo un error al intentar guardar el contrato " + array[6] + " - " + array[1]);
 				}
 			} else {
 				System.out.println("El contrato " + array[6] + " ya está registrado en el sistema.");

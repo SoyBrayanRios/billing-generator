@@ -189,7 +189,7 @@ public class BillServiceImpl implements BillService {
 	}
 
 	public void adjustContracts(Long year, Long month) {
-		System.out.println("Running adjustContracts");
+		System.out.println("Running adjustContracts - FE");
 		List<Contract> contracts = contractRepository
 				.findAll().stream().filter(contract -> !contract.getSharedContract()
 						&& contract.getPaymentPlan().getSelfAdjusting() && contract.getBranch().getFE())
@@ -362,9 +362,17 @@ public class BillServiceImpl implements BillService {
 												: invoiceRepository.getNeIssuedInvoicesDuringContract(
 														resume.getBranch().getBranchId(), dinamycCalendar.getTime(),
 														calendar.getTime());
+								
+								Long discount = 0L;
+								if (module.equals("NE")) {
+									if (year - contract.getContractDate().getYear() == 1
+											&& contract.getFirstYearFree() && contract.getDiscountSecondYear() > 0L) {
+										discount = contract.getDiscountSecondYear();
+									}
+								}
 
 								invoiceDetailMap = tempPlan.getAnnualBillDetail(issuedDocs, issuedDocsLastMonth,
-										chargeSubscription, refill);
+										chargeSubscription, refill, discount);
 							} else {
 								invoiceDetailMap = tempPlan.getBillDetail(resume.getIssuedInvoices());
 							}
@@ -399,7 +407,7 @@ public class BillServiceImpl implements BillService {
 
 	public void getBillsToCollectByOtherCharges(Long year, Long month,
 			LinkedHashMap<Long, LinkedHashMap<Long, Long[]>> invoiceDetailFullMap, Boolean update, String module) {
-		System.out.println("Running getBillsToCollectByOtherCharges");
+		System.out.println("Running getBillsToCollectByOtherCharges - " + module);
 
 		List<Contract> contracts = contractRepository.getContracts(module);
 
@@ -464,7 +472,7 @@ public class BillServiceImpl implements BillService {
 	public void getBillsToCollectDueSharedContracts(Long year, Long month,
 			LinkedHashMap<Long, LinkedHashMap<Long, Long[]>> invoiceDetailFullMap, List<InvoiceResume> resumes,
 			Boolean update, String module) {
-		System.out.println("Running getBillsToCollectDueSharedContracts");
+		System.out.println("Running getBillsToCollectDueSharedContracts - " + module);
 		List<Contract> contracts = contractRepository.getContracts(module);
 		List<String> sharedContracts = contractRepository.getSharedContracts(module);
 		List<Contract> filteredContracts = contracts.stream()
@@ -611,9 +619,17 @@ public class BillServiceImpl implements BillService {
 										: invoiceRepository.getNeIssuedInvoicesDuringContract(branchId,
 												dinamycCalendar.getTime(), calendar.getTime());
 					}
+					
+					Long discount = 0L;
+					if (module.equals("NE")) {
+						if (year - contract.getContractDate().getYear() == 1
+								&& contract.getFirstYearFree() && contract.getDiscountSecondYear() > 0L) {
+							discount = contract.getDiscountSecondYear();
+						}
+					}
 
 					invoiceDetailMap = tempPlan.getAnnualBillDetail(issuedInvoices, issuedDocsLastMonth,
-							chargeSubscription, refill);
+							chargeSubscription, refill, discount);
 				} else {
 					// Sumar las emitidas de ese mes para cada una de las empresas que comparten el
 					// contrato
@@ -659,7 +675,7 @@ public class BillServiceImpl implements BillService {
 			// Cobro de implementacion pendiente
 			if (contract.getImplementationAlreadyPaid() == false) {
 				Long[] valueXQuantity = { 1L, contract.getImplementationCost() };
-				invoiceDetailMap.put(190L, valueXQuantity);
+				invoiceDetailMap.put(module.equals("FE") ? 190L : 200L, valueXQuantity);
 				contract.setImplementationAlreadyPaid(true);
 				if (update) {
 					try {
@@ -672,23 +688,23 @@ public class BillServiceImpl implements BillService {
 
 			// Cobro de mantenimiento vencido de ese periodo
 			if (contract.getModule().equals("FE")) {
-				if (!((Contract) contract).getSharedMaintenance()) {
+				if (!contract.getSharedMaintenance()) {
 					if (contractDate.getYear() + 1900 < year) {
 						if (contractDate.getMonth() + 1 == month) {
 							Long[] valueXQuantity = { 1L,
-									((Contract) contract).getMaintenanceType().getMaintenanceCost() };
+									contract.getMaintenanceType().getMaintenanceCost() };
 							invoiceDetailMap.put(196L, valueXQuantity);
 						}
 					}
 
 					// Cobro de mantenimiento vencido de periodos pasados
-					if (((Contract) contract).getMaintenanceAlreadyPaid() == false) {
-						Long[] valueXQuantity = { 1L, ((Contract) contract).getMaintenanceType().getMaintenanceCost() };
+					if (contract.getMaintenanceAlreadyPaid() == false) {
+						Long[] valueXQuantity = { 1L, contract.getMaintenanceType().getMaintenanceCost() };
 						invoiceDetailMap.put(200L, valueXQuantity);
-						((Contract) contract).setMaintenanceAlreadyPaid(true);
+						contract.setMaintenanceAlreadyPaid(true);
 						if (update) {
 							try {
-								contractRepository.save(((Contract) contract));
+								contractRepository.save(contract);
 							} catch (Exception e) {
 								e.printStackTrace();
 							}
@@ -724,7 +740,7 @@ public class BillServiceImpl implements BillService {
 				bill.setYear(year);
 				bill.setMonth(month);
 				bill.setBranch(branchRepository.findByBranchId(invoiceDetailMap.getKey()));
-				bill.setDescription(generateInvoiceDescription(year, month, tempContract, invoiceDetailMap.getValue()));
+				bill.setDescription(generateInvoiceDescription(year, month, tempContract, invoiceDetailMap.getValue(), module));
 				Double ponderedIpc = this.calculateIpcIncrease(tempContract, year);
 				Double ipcUntilLastYear = this.calculateIpcIncrease(tempContract, year - 1);
 				if (save) {
@@ -795,26 +811,54 @@ public class BillServiceImpl implements BillService {
 	}
 
 	public String generateInvoiceDescription(Long year, Long month, Contract contract,
-			LinkedHashMap<Long, Long[]> invoiceDetailMap) {
+			LinkedHashMap<Long, Long[]> invoiceDetailMap, String module) {
 		cleanDetailMap(invoiceDetailMap);
 		String description = "";
 		Set<Long> keys = invoiceDetailMap.keySet();
 		String monthString = getMonthFromNumber(month);
 
-		if (keys.contains(194L)) {
-			description = "Facturación anual " + monthString + " " + year + " - " + (year + 1) + ". ";
-		} else {
-			description = "Facturación correspondiente al mes de " + monthString + " " + year + ". ";
-		}
+		switch (module) {
+			case "NE": 
+				if (keys.contains(204L)) {
+					description = "Cobro anualidad nomina electrónica " + monthString + " " + year + " - " + (year + 1) + ". ";
+				} else {
+					description = "Cobro mensual nómina electrónica correspondiente al mes de " + monthString + " " + year + ". ";
+				}
+	
+				if (keys.contains(206L)) {
+					description += "Mantenimiento nómina electrónica entre " + monthString + " " + year + "-" + (year + 1)
+							+ " sucursal \"" + contract.getBranch().getCode() + " - " + contract.getBranch().getName() + "\". ";
+				}
+				break;
+			case "DS": 
+				if (keys.contains(304L)) {
+					description = "Cobro anualidad documento soporte " + monthString + " " + year + " - " + (year + 1) + ". ";
+				} else {
+					description = "Cobro mensual documento soporte correspondiente al mes de " + monthString + " " + year + ". ";
+				}
+	
+				if (keys.contains(306L)) {
+					description += "Mantenimiento documento soporte entre " + monthString + " " + year + "-" + (year + 1)
+							+ " sucursal \"" + contract.getBranch().getCode() + " - " + contract.getBranch().getName() + "\". ";
+				}
+				break;
+			case "FE": 
+			default:
+				if (keys.contains(194L)) {
+					description = "Facturación anual " + monthString + " " + year + " - " + (year + 1) + ". ";
+				} else {
+					description = "Facturación correspondiente al mes de " + monthString + " " + year + ". ";
+				}
 
-		if (keys.contains(196L)) {
-			description += "Mantenimiento Facturación Electrónica entre " + monthString + " " + year + "-" + (year + 1)
-					+ " sucursal \"" + contract.getBranch().getCode() + " - " + contract.getBranch().getName() + "\". ";
-		}
+				if (keys.contains(196L)) {
+					description += "Mantenimiento Facturación Electrónica entre " + monthString + " " + year + "-" + (year + 1)
+							+ " sucursal \"" + contract.getBranch().getCode() + " - " + contract.getBranch().getName() + "\". ";
+				}
 
-		if (keys.contains(200L)) {
-			description += "Mantenimiento Facturación Electrónica periodos anteriores vencidos sucursal \""
-					+ contract.getBranch().getCode() + " - " + contract.getBranch().getName() + "\". ";
+				if (keys.contains(200L)) {
+					description += "Mantenimiento Facturación Electrónica periodos anteriores vencidos sucursal \""
+							+ contract.getBranch().getCode() + " - " + contract.getBranch().getName() + "\". ";
+				}
 		}
 
 		return description;
@@ -908,10 +952,10 @@ public class BillServiceImpl implements BillService {
 					row.setClCelular(branch.getPhone());
 					row.setClCorreo((billProduct.getBill().getBranch().getClient().getCorreoElectronico()
 							+ ", facelectronica_cnt@jaimetorres.net").replace(",,", ","));
-					row.setPrCodigoProducto(billProduct.getProduct().getProductId() == 200L ? 196L
+					row.setPrCodigoProducto(module.equals("FE") && billProduct.getProduct().getProductId() == 200L ? 196L
 							: billProduct.getProduct().getProductId());
 					row.setPrDescripcion(
-							billProduct.getProduct().getProductId() == 200L ? "SOPORTE Y MANTENIMIENTO ANUAL  FACELDI"
+							module.equals("FE") && billProduct.getProduct().getProductId() == 200L ? "SOPORTE Y MANTENIMIENTO ANUAL  FACELDI"
 									: billProduct.getProduct().getDescription());
 					row.setPrDescripcionAdicional(bill.getDescription());
 					row.setPrPrecioUnitario(billProduct.getPrice());
@@ -956,10 +1000,10 @@ public class BillServiceImpl implements BillService {
 				row.setClCelular(billProduct.getBill().getBranch().getPhone());
 				row.setClCorreo((billProduct.getBill().getBranch().getClient().getCorreoElectronico()
 						+ ", facelectronica_cnt@jaimetorres.net").replace(",,", ","));
-				row.setPrCodigoProducto(billProduct.getProduct().getProductId() == 200L ? 196L
+				row.setPrCodigoProducto(module.equals("FE") && billProduct.getProduct().getProductId() == 200L ? 196L
 						: billProduct.getProduct().getProductId());
 				row.setPrDescripcion(
-						billProduct.getProduct().getProductId() == 200L ? "SOPORTE Y MANTENIMIENTO ANUAL  FACELDI"
+						module.equals("FE") && billProduct.getProduct().getProductId() == 200L ? "SOPORTE Y MANTENIMIENTO ANUAL  FACELDI"
 								: billProduct.getProduct().getDescription());
 				row.setPrDescripcionAdicional(billProduct.getBill().getDescription());
 				row.setPrPrecioUnitario(billProduct.getPrice());

@@ -28,4 +28,8 @@ public interface FEInvoiceRepository extends JpaRepository<FEInvoice, Long> {
 			+ "and tipo_documento in ('FV','FE','FCF','FCD') and prefijo_factura != 'SETT';", nativeQuery = true)
 	public Date getFirstIssuedDate(Long branchId);
 	
+	@Query(value = "select min(fecha_hora_emision) from documentos where id_sucursal_emisor=:branchId "
+			+ "and tipo_documento in ('DS') and prefijo_factura != 'SEDS';", nativeQuery = true)
+	public Date getFirstIssuedDateDs(Long branchId);
+	
 }
