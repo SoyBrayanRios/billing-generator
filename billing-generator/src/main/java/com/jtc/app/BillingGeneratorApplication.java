@@ -19,9 +19,11 @@ public class BillingGeneratorApplication implements CommandLineRunner{
 
 	@Override
 	public void run(String... args) throws Exception {		
-		contractFeService.saveFeContractsFromFile("/p_18.3_FACELDI_2022/18.3.2_TRABAJO/18.3.2.17_BrayanRios/Otros/Source Billing Generator/BD_Facturación.csv");
+		/*contractFeService.saveFeContractsFromFile("/p_18.3_FACELDI_2022/18.3.2_TRABAJO/18.3.2.17_BrayanRios/Otros/Source Billing Generator/BD_Facturación.csv");
 		contractFeService.saveFeContractsFromFile("/p_18.3_FACELDI_2022/18.3.2_TRABAJO/18.3.2.17_BrayanRios/Otros/Source Billing Generator/BD_Facturación2.csv");
 		contractFeService.saveFeContractsFromFile("/p_18.3_FACELDI_2022/18.3.2_TRABAJO/18.3.2.17_BrayanRios/Otros/Source Billing Generator/BD_Facturación3.csv");
+		contractFeService.saveFeContractsFromFile("/p_18.3_FACELDI_2022/18.3.2_TRABAJO/18.3.2.17_BrayanRios/Otros/Source Billing Generator/BD_Facturación4.csv");*/
+		contractFeService.saveNeContractsFromFile("/home/brayan.rios/Descargas/Test_NE.csv");
 	}
 
 }

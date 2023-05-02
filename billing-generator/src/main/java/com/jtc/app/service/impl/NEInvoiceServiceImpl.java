@@ -6,15 +6,12 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.jtc.app.secondary.dao.FEInvoiceRepository;
 import com.jtc.app.secondary.dao.NEInvoiceRepository;
-import com.jtc.app.secondary.entity.FEInvoice;
 import com.jtc.app.secondary.entity.NEInvoice;
-import com.jtc.app.service.FEInvoiceService;
 import com.jtc.app.service.NEInvoiceService;
 
 @Service
-public class NEInvoiceServiceImpl implements NEInvoiceService{
+public class NEInvoiceServiceImpl implements NEInvoiceService {
 
 	@Autowired
 	private NEInvoiceRepository neInvoiceRepository;

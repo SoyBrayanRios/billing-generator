@@ -245,7 +245,7 @@ public class BillServiceImpl implements BillService {
 				if (cancellationRepository.findByContractId(contract.getContractId()) == null) {
 					boolean skip = Optional.ofNullable(sharedContractsFilter.contains(contract.getContractId()))
 							.orElse(false);
-					if (skip == false) {
+					if (!skip) {
 						// ---------------------------------------
 						PaymentType tempPlan = contract.getPaymentPlan();
 						Date contractDate = contract.getReferencePaymentDate();
@@ -297,12 +297,17 @@ public class BillServiceImpl implements BillService {
 								// Calcular las facturas emitidas del mes anterior
 
 								Boolean refill = false;
-								if (module.equals("FE") && issuedDocs > tempPlan.getDocumentQuantity()) {
+								if ((module.equals("FE") || module.equals("NE"))  
+										&& issuedDocs > tempPlan.getDocumentQuantity()) {
 									// Validate if it is a Centsys' company to refill the contract
 									Alliance alliance = contract.getBranch().getClient().getAlliance();
-									if (alliance != null) {
-										Long allianceId = alliance.getAllianceId();
-										if (allianceId == 4L) {
+									if (alliance != null || module.equals("NE")) {
+										Long allianceId = 0L;
+										if (alliance != null) {
+											allianceId = alliance.getAllianceId();
+										}
+										
+										if (module.equals("FE") ? allianceId == 4L : module.equals("NE")) {
 											refill = true;
 											chargeSubscription = true;
 
@@ -416,9 +421,9 @@ public class BillServiceImpl implements BillService {
 		List<String> sharedContractsFilter = contractRepository.getSharedContracts(module);
 
 		List<Contract> contractsFiltered = contracts.stream()
-				.filter(c -> !keys.contains(c.getBranch().getBranchId()) && c.getBranch().getActive()
+				.filter(c -> !keys.contains(c.getBranch().getBranchId())
 						&& !sharedContractsFilter.contains(c.getContractId())
-						&& (c.getModule().equals("FE") ? !c.getSharedMaintenance() : false)
+						&& (c.getModule().equals("FE") ? !c.getSharedMaintenance() : c.getModule().equals("NE"))
 						&& cancellationRepository.findByContractId(c.getContractId()) == null)
 				.collect(Collectors.toList());// TODO Check
 
@@ -428,16 +433,17 @@ public class BillServiceImpl implements BillService {
 				Long[] valQuant = new Long[2];
 				Date contractDate = contract.getReferencePaymentDate();
 				PaymentType tempPlan = contract.getPaymentPlan();
-				if (tempPlan.getDiscriminatorType() == 1) {
+				if (tempPlan.getDiscriminatorType() == 1 || tempPlan.getDiscriminatorType() == 4
+						|| tempPlan.getDiscriminatorType() == 5) {
 					if (tempPlan.getPaymentFrequency().getFrequencyId() == 4) {
 						valQuant[0] = 1L;
 						valQuant[1] = tempPlan.getPackagePrice();
-						invoiceDetailMap.put(192L, valQuant);
+						invoiceDetailMap.put(module.equals("FE") ? 192L: 182L, valQuant);
 					} else if (tempPlan.getPaymentFrequency().getFrequencyId() == 8) {
 						if (contractDate.getMonth() == month - 1 && (contractDate.getYear() + 1900) < year) {
 							valQuant[0] = 1L;
 							valQuant[1] = tempPlan.getPackagePrice();
-							invoiceDetailMap.put(194L, valQuant);
+							invoiceDetailMap.put(module.equals("FE") ? 194L: 184L, valQuant);
 
 							// --Fix date
 							Calendar calendar = Calendar.getInstance();
@@ -477,7 +483,6 @@ public class BillServiceImpl implements BillService {
 		List<String> sharedContracts = contractRepository.getSharedContracts(module);
 		List<Contract> filteredContracts = contracts.stream()
 				.filter(contract -> sharedContracts.contains(contract.getContractId())
-						&& contract.getBranch().getActive()
 						&& cancellationRepository.findByContractId(contract.getContractId()) == null)
 				.collect(Collectors.toList());
 
@@ -554,12 +559,13 @@ public class BillServiceImpl implements BillService {
 					// Calcular las facturas emitidas del mes anterior
 
 					Boolean refill = false;
-					if (module.equals("FE") && issuedInvoices > tempPlan.getDocumentQuantity()) {
+					if ((module.equals("FE") || module.equals("NE")) 
+							&& issuedInvoices > tempPlan.getDocumentQuantity()) {
 						// Validate if it is a Centsys' company to refill the contract
 						Alliance alliance = contract.getBranch().getClient().getAlliance();
 						if (alliance != null) {
 							Long allianceId = alliance.getAllianceId();
-							if (allianceId == 4L) {
+							if (module.equals("FE") ? allianceId == 4L : false || module.equals("NE")) {
 								refill = true;
 								chargeSubscription = true;
 
@@ -675,7 +681,7 @@ public class BillServiceImpl implements BillService {
 			// Cobro de implementacion pendiente
 			if (contract.getImplementationAlreadyPaid() == false) {
 				Long[] valueXQuantity = { 1L, contract.getImplementationCost() };
-				invoiceDetailMap.put(module.equals("FE") ? 190L : 200L, valueXQuantity);
+				invoiceDetailMap.put(module.equals("FE") ? 190L : 183L, valueXQuantity);
 				contract.setImplementationAlreadyPaid(true);
 				if (update) {
 					try {
@@ -819,15 +825,10 @@ public class BillServiceImpl implements BillService {
 
 		switch (module) {
 			case "NE": 
-				if (keys.contains(204L)) {
+				if (keys.contains(184L)) {
 					description = "Cobro anualidad nomina electrónica " + monthString + " " + year + " - " + (year + 1) + ". ";
 				} else {
 					description = "Cobro mensual nómina electrónica correspondiente al mes de " + monthString + " " + year + ". ";
-				}
-	
-				if (keys.contains(206L)) {
-					description += "Mantenimiento nómina electrónica entre " + monthString + " " + year + "-" + (year + 1)
-							+ " sucursal \"" + contract.getBranch().getCode() + " - " + contract.getBranch().getName() + "\". ";
 				}
 				break;
 			case "DS": 

@@ -2,6 +2,7 @@ package com.jtc.app.secondary.entity;
 
 import java.io.Serializable;
 
+import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
 import lombok.Data;
@@ -10,8 +11,11 @@ import lombok.Data;
 @Data
 public class NEInvoiceId implements Serializable {
 	
+	@Column(name = "id_sucursal_empleador")
 	private Long id_sucursal_empleador;
+	@Column(name = "tipo")
 	private Long tipo;
+	@Column(name = "numero")
 	private String numero;
 	
 	public NEInvoiceId() {

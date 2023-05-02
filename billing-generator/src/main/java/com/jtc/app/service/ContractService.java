@@ -12,4 +12,5 @@ public interface ContractService {
 	public Contract getContractByBranch(Long branchId, String module);
 	public void deleteContract(String contractId);
 	public List<Contract> saveFeContractsFromFile(String filePath);
+	public List<Contract> saveNeContractsFromFile(String filePath);
 }

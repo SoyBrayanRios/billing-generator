@@ -38,17 +38,15 @@ public class PaymentType {
 												{"191","DOCUMENTOS EMITIDOS FACELDI"},
 												{"192","MENSUALIDAD FIJA / PLAN FIJO DOC EMITIDOS FACELDI"},
 												{"194","ANUALIDAD FIJA FACELDI"},
-												{"196","SOPORTE Y MANTENIMIENTO ANUAL FACELDI"},
-												{"200","IMPLEMENTACION NOMINA ELECTRONICA"},
-												{"201","DOCUMENTOS EMITIDOS FACELDI - NOMINA"},
-												{"202","MENSUALIDAD FIJA / PLAN FIJO DOC EMITIDOS FACELDI - NOMINA"},
-												{"204","ANUALIDAD FIJA FACELDI - NOMINA"},
-												{"206","SOPORTE Y MANTENIMIENTO ANUAL FACELDI - NOMINA"},
-												{"300","IMPLEMENTACION DOCUMENTO SOPORTE"},
-												{"301","DOCUMENTOS EMITIDOS FACELDI - DOCUMENTO SOPORTE"},
-												{"302","MENSUALIDAD FIJA / PLAN FIJO DOC EMITIDOS FACELDI - DOCUMENTO SOPORTE"},
-												{"304","ANUALIDAD FIJA FACELDI - DOCUMENTO SOPORTE"},
-												{"306","SOPORTE Y MANTENIMIENTO ANUAL FACELDI - DOCUMENTO SOPORTE"}};
+												{"196","SOPORTE Y MANTENIMIENTO ANUAL FACELDI"}, // OK
+												{"182","MENSUALIDAD NOMINA ELECTRONICA"},
+												{"183","IMPLEMENTACION NOMINA ELECTRONICA"},
+												{"184","ANUALIDAD NOMINA ELECTRONICA"}};
+												//{"300","IMPLEMENTACION DOCUMENTO SOPORTE"},
+												//{"301","DOCUMENTOS EMITIDOS FACELDI - DOCUMENTO SOPORTE"},
+												//{"302","MENSUALIDAD FIJA / PLAN FIJO DOC EMITIDOS FACELDI - DOCUMENTO SOPORTE"},
+												//{"304","ANUALIDAD FIJA FACELDI - DOCUMENTO SOPORTE"},
+												//{"306","SOPORTE Y MANTENIMIENTO ANUAL FACELDI - DOCUMENTO SOPORTE"}};
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -97,45 +95,30 @@ public class PaymentType {
 				valQuant[0] = 1L;
 				valQuant[1] = this.packagePrice;				
 			}
-			invoiceDetailMap.put(
-					modulePlan.equals("FE") ? Long.parseLong(CONCEPTS[2][0])
-							: modulePlan.equals("NE") ? Long.parseLong(CONCEPTS[7][0])
-									: Long.parseLong(CONCEPTS[12][0]), valQuant);
+			invoiceDetailMap.put(Long.parseLong(CONCEPTS[2][0]), valQuant);
 			if (docQuantity > limit && limit != -1) {
 				valQuant = new Long[2];
 				valQuant[0] = docQuantity - limit;
 				valQuant[1] = this.documentPrice;
-				invoiceDetailMap.put(
-						modulePlan.equals("FE") ? Long.parseLong(CONCEPTS[1][0])
-								: modulePlan.equals("NE") ? Long.parseLong(CONCEPTS[6][0])
-										: Long.parseLong(CONCEPTS[11][0]), valQuant);
+				invoiceDetailMap.put(Long.parseLong(CONCEPTS[1][0]), valQuant);
 			}
 			return invoiceDetailMap;
 		case 2:
 			valQuant[0] = docQuantity;
 			valQuant[1] = this.documentPrice;
-			invoiceDetailMap.put(
-					modulePlan.equals("FE") ? Long.parseLong(CONCEPTS[1][0])
-							: modulePlan.equals("NE") ? Long.parseLong(CONCEPTS[6][0])
-									: Long.parseLong(CONCEPTS[11][0]), valQuant);
+			invoiceDetailMap.put(Long.parseLong(CONCEPTS[1][0]), valQuant);
 			if (this.mixedContract) {
 				valQuant = new Long[2];
 				valQuant[0] = 1L;
 				valQuant[1] = this.packagePrice;
-				invoiceDetailMap.put(
-						modulePlan.equals("FE") ? Long.parseLong(CONCEPTS[2][0])
-								: modulePlan.equals("NE") ? Long.parseLong(CONCEPTS[7][0])
-										: Long.parseLong(CONCEPTS[12][0]), valQuant);
+				invoiceDetailMap.put(Long.parseLong(CONCEPTS[2][0]), valQuant);
 			}
 			return invoiceDetailMap;
 		case 3: 
 			Long pricePerDocument = getPricePerDocument(docQuantity.intValue());
 			valQuant[0] = docQuantity;
 			valQuant[1] = pricePerDocument;
-			invoiceDetailMap.put(
-					modulePlan.equals("FE") ? Long.parseLong(CONCEPTS[1][0])
-							: modulePlan.equals("NE") ? Long.parseLong(CONCEPTS[6][0])
-									: Long.parseLong(CONCEPTS[11][0]), valQuant);
+			invoiceDetailMap.put(Long.parseLong(CONCEPTS[1][0]), valQuant);
 			return invoiceDetailMap;
 		default:
 			return null;
@@ -153,18 +136,12 @@ public class PaymentType {
 				Long[] valQuant = new Long[2];
 				valQuant[0] = issuedDocQuantity - issuedDocsLastMonth;
 				valQuant[1] = this.documentPrice;
-				invoiceDetailMap.put(
-						modulePlan.equals("FE") ? Long.parseLong(CONCEPTS[1][0])
-								: modulePlan.equals("NE") ? Long.parseLong(CONCEPTS[6][0])
-										: Long.parseLong(CONCEPTS[11][0]), valQuant);
+				invoiceDetailMap.put(Long.parseLong(CONCEPTS[1][0]), valQuant);
 			} else if (issuedDocQuantity > limit){
 				Long[] valQuant = new Long[2];
 				valQuant[0] = issuedDocQuantity - limit;
 				valQuant[1] = this.documentPrice;
-				invoiceDetailMap.put(
-						modulePlan.equals("FE") ? Long.parseLong(CONCEPTS[1][0])
-								: modulePlan.equals("NE") ? Long.parseLong(CONCEPTS[6][0])
-										: Long.parseLong(CONCEPTS[11][0]), valQuant);
+				invoiceDetailMap.put(Long.parseLong(CONCEPTS[1][0]), valQuant);
 			}			
 		}
 		
@@ -172,10 +149,8 @@ public class PaymentType {
 			Long[] valQuant = new Long[2];
 			valQuant[0] = 1L;
 			valQuant[1] = discount != null && discount > 0L ? this.packagePrice * (discount / 100) : this.packagePrice;
-			invoiceDetailMap.put(
-					modulePlan.equals("FE") ? Long.parseLong(CONCEPTS[3][0])
-							: modulePlan.equals("NE") ? Long.parseLong(CONCEPTS[8][0])
-									: Long.parseLong(CONCEPTS[13][0]), valQuant);
+			invoiceDetailMap.put(modulePlan.equals("FE") ? Long.parseLong(CONCEPTS[3][0])
+							: Long.parseLong(CONCEPTS[7][0]), valQuant);
 		}
 		
 		return invoiceDetailMap;

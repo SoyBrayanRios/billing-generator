@@ -5,11 +5,15 @@ import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "ne_documentos")
-@Data
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
 public class NEInvoice {
 
 	@EmbeddedId

@@ -342,6 +342,7 @@ public class ContractServiceImpl implements ContractService {
 		return contracts;
 	}
 
+	@Override
 	public List<Contract> saveNeContractsFromFile(String filePath) {
 		List<Contract> contracts = new ArrayList<>();
 		List<String[]> tempArray = this.getArrayFromFile(filePath);
@@ -402,7 +403,7 @@ public class ContractServiceImpl implements ContractService {
 
 					Frequency frequency = frequencyService.getFrequencyById(id);
 
-					paymentType = paymentTypeRepository.findPackageByParams(4, null, array[18],
+					paymentType = paymentTypeRepository.findPackageByParams(4, "", array[18],
 							Integer.parseInt(array[20]), Long.parseLong(array[21]),
 							(array[24] == "" || array[24] == null) ? 520L : Long.parseLong(array[24]), frequency, "NE",
 							false, false);
@@ -422,8 +423,8 @@ public class ContractServiceImpl implements ContractService {
 						paymentType.setMixedContract(false);
 						paymentType.setSelfAdjusting(false);
 						try {
-							contract.setPaymentPlan(paymentType);
-							// contract.setPaymentPlan(paymentTypeRepository.save(paymentType));
+							//contract.setPaymentPlan(paymentType);
+							contract.setPaymentPlan(paymentTypeRepository.save(paymentType));
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
@@ -433,9 +434,8 @@ public class ContractServiceImpl implements ContractService {
 				}
 
 				try {
-					// contractRepository.save(contract);
+					contractRepository.save(contract);
 					System.out.println("Se guardó el contrato " + array[6] + " correctamente.");
-					System.out.println(contract.toString());
 				} catch (Exception e) {
 					System.out.println("Hubo un error al intentar guardar el contrato " + array[6] + " - " + array[1]);
 					e.printStackTrace();
@@ -497,23 +497,23 @@ public class ContractServiceImpl implements ContractService {
 						paymentType = paymentTypeRepository.findPackageByParams(5,
 								array[34].equalsIgnoreCase("SI") ? array[21] : "", array[15],
 								Integer.parseInt(array[16]), Long.parseLong(array[17]),
-								(array[19] == "" || array[19] == null) ? 620L : Long.parseLong(array[19]),
-								frequency, "FE", array[35].equalsIgnoreCase("Si") ? true : false,
+								(array[34].equalsIgnoreCase("SI") || array[19] == null) ? 520L : Long.parseLong(array[19]),
+								frequency, "DS", array[35].equalsIgnoreCase("Si") ? true : false,
 								array[34].equalsIgnoreCase("SI") ? true : false);
 						
 						if (paymentType == null) {
 							paymentType = new PaymentType();
 							paymentType.setSelfAdjusting(array[34].equalsIgnoreCase("SI") ? true : false);
-							paymentType.setDiscriminatorType(1);
-							paymentType.setModulePlan("FE");
+							paymentType.setDiscriminatorType(5);
+							paymentType.setModulePlan("DS");
 							paymentType.setPackageName(paymentType.getSelfAdjusting() ? array[15] : null);
 							paymentType.setDocumentQuantity(Integer.parseInt(array[16]));
 							paymentType.setPackagePrice(Long.parseLong(array[17]));
 							paymentType.setDocumentPrice(
-									(array[19] == "" || array[19] == null) ? 620L : Long.parseLong(array[19]));
+									(array[34].equalsIgnoreCase("SI") || array[19] == null) ? 520L : Long.parseLong(array[19]));
 							paymentType.setPaymentFrequency(frequency);
-							paymentType.generateFePlanDescription();
-							paymentType.setCostRange(paymentType.getSelfAdjusting() ? array[21] : null);
+							paymentType.generateFePlanDescription(); //TODO Generate description
+							paymentType.setCostRange(paymentType.getSelfAdjusting() ? array[20] : null);
 							paymentType.setMixedContract(array[35].equalsIgnoreCase("Si") ? true : false);
 							try {
 								// contract.setPaymentPlan(paymentType);
@@ -529,38 +529,11 @@ public class ContractServiceImpl implements ContractService {
 
 				// Set maintenance
 				// Validate if it is a shared maintenance
-				if (array[26].equalsIgnoreCase("No")) {
-					Long id = 0L;
-					if (array[23].equalsIgnoreCase("Mensual")) {
-						id = 4L;
-					} else {
-						id = 8L;
-					}
-					Frequency frequency = frequencyService.getFrequencyById(id);
-					Maintenance maintenance = maintenanceRepository
-							.getMaintenanceByCostFrequency(Long.parseLong(array[22]), frequency);
-					if (maintenance == null) {
-						try {
-							maintenance = new Maintenance();
-							maintenance.setMaintenanceCost(Long.parseLong(array[22]));
-							maintenance.setMaintenanceFrequency(frequency);
-							// contract.setMaintenanceType(maintenance);
-							contract.setMaintenanceType(maintenanceRepository.save(maintenance));
-							contract.setMaintenanceAlreadyPaid(array[25].equalsIgnoreCase("Si") ? false : true);
-							contract.setSharedMaintenance(false);
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-					} else {
-						contract.setMaintenanceType(maintenance);
-						contract.setMaintenanceAlreadyPaid(array[25].equalsIgnoreCase("Si") ? false : true);
-						contract.setSharedMaintenance(false);
-					}
-				} else {
-					contract.setMaintenanceType(null);
-					contract.setMaintenanceAlreadyPaid(false);
-					contract.setSharedMaintenance(true);
-				}
+				
+				contract.setMaintenanceType(null);
+				contract.setMaintenanceAlreadyPaid(true);
+				contract.setSharedMaintenance(true);
+				
 				try {
 					contractRepository.save(contract);
 					System.out.println("Se guardó el contrato " + array[6] + " correctamente.");
