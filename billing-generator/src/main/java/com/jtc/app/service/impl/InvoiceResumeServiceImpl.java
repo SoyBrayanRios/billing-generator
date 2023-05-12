@@ -89,7 +89,7 @@ public class InvoiceResumeServiceImpl implements InvoiceResumeService {
 				}
 			});
 		}
-		return invoiceResumeRepository.findAll();
+		return invoiceResumeRepository.findByModule(module);
 	}
 
 	@Override

@@ -19,10 +19,6 @@ public class NEClient {
 	private Long tipoIdentificacion;
 	@Column(name = "digito_verificacion")
 	private String digitoVerif;
-	//@Column(name = "tipo_regimen")
-	//private Long tipoRegimen;
-	//@Column(name = "tipo_persona")
-	//private Long tipoPersona;
 	@Column(name = "razon_social")
 	private String razonSocial;
 	@Column(name = "primer_apellido")
@@ -33,8 +29,6 @@ public class NEClient {
 	private String primerNombre;
 	@Column(name = "segundo_nombre")
 	private String segundoNombre;
-	//@Column(name = "emisor")
-	//private Boolean emisor;
 	@Column(name = "estado")
 	private Long estado;
 	@Column(name = "departamento")
@@ -43,12 +37,9 @@ public class NEClient {
 	private String municipio;
 	@Column(name = "direccion")
 	private String direccion;
-	//@Column(name = "zona_postal")
-	//private String zonaPostal;
 	@Column(name = "correo_electronico")
 	private String correoElectronico;
 	@Column(name = "alianza_comercial")
 	private Long alianzaComercial;
-	//@Column(name = "documento_equivalente")
-	//private Boolean documentoEquivalente;
+
 }

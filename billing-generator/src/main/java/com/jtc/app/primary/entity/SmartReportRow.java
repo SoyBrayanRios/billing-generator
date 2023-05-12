@@ -31,7 +31,7 @@ public class SmartReportRow {
 	private String cInvoiceLineAdOrgId = "JAIME TORRES C Y CIA SA";
 	private Long cInvoiceLineCInvoiceId;
 	private Integer cInvoiceLine;
-	private Long cInvoiceLineMProductId;
+	private String cInvoiceLineMProductId;
 	private String cInvoiceLineDescription;
 	private Long cInvoiceLineQtyEntered;
 	private String cInvoiceLineCUOMId = "Each";

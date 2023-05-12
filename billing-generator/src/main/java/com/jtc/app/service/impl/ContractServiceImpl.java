@@ -128,10 +128,11 @@ public class ContractServiceImpl implements ContractService {
 					 * if (i == 21 && fields[i] != null && fields[i] != "") { fields[i] =
 					 * fields[i].substring(1, fields[i].length() - 1); }
 					 */
-					if ((i == 11 || i == 17 || i == 19 || i == 20 || i == 21 || i == 22 || i == 24) && fields[i] != null
+					if ((i == 6 || i == 11 || i == 17 || i == 19 || i == 20 || i == 21 || i == 22 || i == 24) && fields[i] != null
 							&& fields[i] != "") {
 						fields[i] = fields[i].replace("$", "");
 						fields[i] = fields[i].replace(".", "");
+						fields[i] = fields[i].replace(" ", "");
 					}
 					fields[i] = fields[i].trim();
 				}
@@ -363,8 +364,10 @@ public class ContractServiceImpl implements ContractService {
 					contract.setContractDate(formatter.parse(array[7]));
 					if (array[30].equals("Habilitación")) {
 						contract.setReferencePaymentDate(formatter.parse(array[28]));
-					} else {
+					} else if (array[30].equals("Emisión")) {
 						contract.setReferencePaymentDate(formatter.parse(array[29]));
+					} else {
+						contract.setReferencePaymentDate(formatter.parse(array[7]));
 					}
 				} catch (ParseException e1) {
 					e1.printStackTrace();
@@ -402,19 +405,22 @@ public class ContractServiceImpl implements ContractService {
 					}
 
 					Frequency frequency = frequencyService.getFrequencyById(id);
-
-					paymentType = paymentTypeRepository.findPackageByParams(4, "", array[18],
-							Integer.parseInt(array[20]), Long.parseLong(array[21]),
-							(array[24] == "" || array[24] == null) ? 520L : Long.parseLong(array[24]), frequency, "NE",
-							false, false);
+					
+					int discriminatorType = array[15].equalsIgnoreCase("Por documentos emitidos") ? 4 : 5;
+					
+					paymentType = paymentTypeRepository.findPackageByParams(discriminatorType, "", array[18],
+							discriminatorType == 5 ? Integer.parseInt(array[20]) : 0, 
+									discriminatorType == 5 ? Long.parseLong(array[21]) : 0,
+								(array[24] == "" || array[24] == null) ? 520L : Long.parseLong(array[24]), frequency, "NE",
+										false, false);
 
 					if (paymentType == null) {
 						paymentType = new PaymentType();
-						paymentType.setDiscriminatorType(4);
+						paymentType.setDiscriminatorType(discriminatorType);
 						paymentType.setModulePlan("NE");
 						paymentType.setPackageName(array[18] != null ? array[18] : null);
-						paymentType.setDocumentQuantity(Integer.parseInt(array[20]));
-						paymentType.setPackagePrice(Long.parseLong(array[21]));
+						paymentType.setDocumentQuantity(discriminatorType == 5 ? Integer.parseInt(array[20]) : 0);
+						paymentType.setPackagePrice(discriminatorType == 5 ? Long.parseLong(array[21]) : 0);
 						paymentType.setDocumentPrice(
 								(array[24] == "" || array[24] == null) ? 520L : Long.parseLong(array[24]));
 						paymentType.setPaymentFrequency(frequency);
@@ -477,7 +483,7 @@ public class ContractServiceImpl implements ContractService {
 				contract.setImplementationCost(array[11] != null ? Long.parseLong(array[11]) : 0L);
 				contract.setImplementationAlreadyPaid(array[31].equalsIgnoreCase("No") ? true : false);
 				contract.setSharedContract(array[13].equalsIgnoreCase("Si") ? true : false);
-				contract.setPrepaid(false);
+				contract.setPrepaid(true);
 				
 				// Validate if it is a shared contract
 				if (array[13].equalsIgnoreCase("Si")) {
@@ -494,17 +500,18 @@ public class ContractServiceImpl implements ContractService {
 						}
 						Frequency frequency = frequencyService.getFrequencyById(id);
 						
-						paymentType = paymentTypeRepository.findPackageByParams(5,
+						paymentType = paymentTypeRepository.findPackageByParams(6,
 								array[34].equalsIgnoreCase("SI") ? array[21] : "", array[15],
 								Integer.parseInt(array[16]), Long.parseLong(array[17]),
-								(array[34].equalsIgnoreCase("SI") || array[19] == null) ? 520L : Long.parseLong(array[19]),
+								(array[34].equalsIgnoreCase("SI") || array[19] == null
+								|| array[19] == "") ? 520L : Long.parseLong(array[19]),
 								frequency, "DS", array[35].equalsIgnoreCase("Si") ? true : false,
 								array[34].equalsIgnoreCase("SI") ? true : false);
 						
 						if (paymentType == null) {
 							paymentType = new PaymentType();
 							paymentType.setSelfAdjusting(array[34].equalsIgnoreCase("SI") ? true : false);
-							paymentType.setDiscriminatorType(5);
+							paymentType.setDiscriminatorType(6);
 							paymentType.setModulePlan("DS");
 							paymentType.setPackageName(paymentType.getSelfAdjusting() ? array[15] : null);
 							paymentType.setDocumentQuantity(Integer.parseInt(array[16]));
@@ -512,8 +519,8 @@ public class ContractServiceImpl implements ContractService {
 							paymentType.setDocumentPrice(
 									(array[34].equalsIgnoreCase("SI") || array[19] == null) ? 520L : Long.parseLong(array[19]));
 							paymentType.setPaymentFrequency(frequency);
-							paymentType.generateFePlanDescription(); //TODO Generate description
-							paymentType.setCostRange(paymentType.getSelfAdjusting() ? array[20] : null);
+							//paymentType.generateFePlanDescription(); //TODO Generate description
+							paymentType.setCostRange(paymentType.getSelfAdjusting() ? array[21] : null);
 							paymentType.setMixedContract(array[35].equalsIgnoreCase("Si") ? true : false);
 							try {
 								// contract.setPaymentPlan(paymentType);

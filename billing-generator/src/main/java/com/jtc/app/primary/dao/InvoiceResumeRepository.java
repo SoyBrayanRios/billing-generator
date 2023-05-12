@@ -21,6 +21,10 @@ public interface InvoiceResumeRepository extends JpaRepository<InvoiceResume, Lo
 			nativeQuery = true)
 	public List<InvoiceResume> findByYearMonthModule(Long year, Long month, String module);
 	
+	@Query(value = "select * from invoice_resume where module=:module", 
+			nativeQuery = true)
+	public List<InvoiceResume> findByModule(String module);
+	
 	@Modifying(clearAutomatically = true)
 	@Query(value = "update invoice_resume set issued_invoices=:issuedInvoices where resume_id=:resumeId ;", nativeQuery = true)
 	public void updateById(Long resumeId, Long issuedInvoices);

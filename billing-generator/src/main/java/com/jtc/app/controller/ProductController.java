@@ -20,11 +20,11 @@ public class ProductController {
 		return productService.getProducts();
 	}
 
-	public Product getProductById(Long productId) {
+	public Product getProductById(String productId) {
 		return productService.getProductById(productId);
 	}
 
-	public void deleteProduct(Long productId) {
+	public void deleteProduct(String productId) {
 		productService.deleteProduct(productId);
 	}
 }

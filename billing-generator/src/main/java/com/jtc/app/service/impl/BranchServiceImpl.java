@@ -183,6 +183,7 @@ public class BranchServiceImpl implements BranchService {
 				tempBranch.setPhone(transmitter.getTelefono());
 				tempBranch.setEmail(transmitter.getCorreoElectronico());
 				tempBranch.setClient(clientRepository.findByNit(transmitter.getNroIdentificacion()));
+				tempBranch.setNE(true);
 				try {
 					branchRepository.save(tempBranch);
 					System.out.println("Se guardó con éxito la sucursal " + tempBranch.getBranchId());

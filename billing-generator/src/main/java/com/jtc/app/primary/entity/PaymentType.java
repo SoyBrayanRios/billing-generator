@@ -1,6 +1,8 @@
 package com.jtc.app.primary.entity;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -39,14 +41,14 @@ public class PaymentType {
 												{"192","MENSUALIDAD FIJA / PLAN FIJO DOC EMITIDOS FACELDI"},
 												{"194","ANUALIDAD FIJA FACELDI"},
 												{"196","SOPORTE Y MANTENIMIENTO ANUAL FACELDI"}, // OK
+												{"181","DOCUMENTOS EMITIDOS NE"},
 												{"182","MENSUALIDAD NOMINA ELECTRONICA"},
 												{"183","IMPLEMENTACION NOMINA ELECTRONICA"},
-												{"184","ANUALIDAD NOMINA ELECTRONICA"}};
-												//{"300","IMPLEMENTACION DOCUMENTO SOPORTE"},
-												//{"301","DOCUMENTOS EMITIDOS FACELDI - DOCUMENTO SOPORTE"},
-												//{"302","MENSUALIDAD FIJA / PLAN FIJO DOC EMITIDOS FACELDI - DOCUMENTO SOPORTE"},
-												//{"304","ANUALIDAD FIJA FACELDI - DOCUMENTO SOPORTE"},
-												//{"306","SOPORTE Y MANTENIMIENTO ANUAL FACELDI - DOCUMENTO SOPORTE"}};
+												{"184","ANUALIDAD NOMINA ELECTRONICA"},
+												{"185","DOCUMENTOS EMITIDOS DS"},
+												{"185-1","MENSUALIDAD DS"},
+												{"185-2","ANUALIDAD DS"},
+												{"185-3","IMPLEMENTACION DS"}};
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -79,11 +81,17 @@ public class PaymentType {
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "paymentPlan")
 	private Set<Contract> contracts;
 	
-	public LinkedHashMap<Long, Long[]> getBillDetail(Long docQuantity) {
+	/**
+	 * Calcula los conceptos que se deben cobrar a ese cliente si es de tipo facturación mensual 
+	 * @param docQuantity (Cantidad de documentos emitidos en el mes)
+	 * @return LinkedHashMap que contiene el concepto, las cantidades y sus respectivos valores
+	 */
+	public LinkedHashMap<String, Long[]> getBillDetail(Long docQuantity) {
 		Long[] valQuant = new Long[2];
-		LinkedHashMap<Long, Long[]> invoiceDetailMap = new LinkedHashMap<>();
+		LinkedHashMap<String, Long[]> invoiceDetailMap = new LinkedHashMap<>();
 		switch (this.discriminatorType) {
 		case 1: 
+		case 5:
 			int limit = 0; 
 			limit = this.documentQuantity;
 			
@@ -95,40 +103,61 @@ public class PaymentType {
 				valQuant[0] = 1L;
 				valQuant[1] = this.packagePrice;				
 			}
-			invoiceDetailMap.put(Long.parseLong(CONCEPTS[2][0]), valQuant);
+			invoiceDetailMap.put(modulePlan.equals("FE") ? CONCEPTS[2][0] 
+					: modulePlan.equals("NE") ? CONCEPTS[6][0]
+					: CONCEPTS[10][0], valQuant);
 			if (docQuantity > limit && limit != -1) {
 				valQuant = new Long[2];
 				valQuant[0] = docQuantity - limit;
 				valQuant[1] = this.documentPrice;
-				invoiceDetailMap.put(Long.parseLong(CONCEPTS[1][0]), valQuant);
+				invoiceDetailMap.put(modulePlan.equals("FE") ? CONCEPTS[1][0] 
+						: modulePlan.equals("NE") ? CONCEPTS[5][0]
+						: CONCEPTS[9][0], valQuant);
 			}
 			return invoiceDetailMap;
 		case 2:
+		case 4:
 			valQuant[0] = docQuantity;
 			valQuant[1] = this.documentPrice;
-			invoiceDetailMap.put(Long.parseLong(CONCEPTS[1][0]), valQuant);
+			invoiceDetailMap.put(modulePlan.equals("FE") ? CONCEPTS[1][0] 
+					: modulePlan.equals("NE") ? CONCEPTS[5][0]
+					: CONCEPTS[9][0], valQuant);
 			if (this.mixedContract) {
 				valQuant = new Long[2];
 				valQuant[0] = 1L;
 				valQuant[1] = this.packagePrice;
-				invoiceDetailMap.put(Long.parseLong(CONCEPTS[2][0]), valQuant);
+				invoiceDetailMap.put(modulePlan.equals("FE") ? CONCEPTS[2][0] 
+						: modulePlan.equals("NE") ? CONCEPTS[6][0]
+						: CONCEPTS[10][0], valQuant);
 			}
 			return invoiceDetailMap;
 		case 3: 
 			Long pricePerDocument = getPricePerDocument(docQuantity.intValue());
 			valQuant[0] = docQuantity;
 			valQuant[1] = pricePerDocument;
-			invoiceDetailMap.put(Long.parseLong(CONCEPTS[1][0]), valQuant);
+			invoiceDetailMap.put(modulePlan.equals("FE") ? CONCEPTS[1][0] 
+					: modulePlan.equals("NE") ? CONCEPTS[5][0]
+					: CONCEPTS[9][0], valQuant);
 			return invoiceDetailMap;
 		default:
 			return null;
 		}
 	}
 	
-	public LinkedHashMap<Long, Long[]> getAnnualBillDetail(Long issuedDocQuantity, Long issuedDocsLastMonth, 
+	/**
+	 * Calcula los conceptos que se deben cobrar a ese cliente si es de tipo facturación anual
+	 * @param issuedDocQuantity (Cantidad de documentos emitidos desde su último cobro de anualidad hasta la fecha de facturación)
+	 * @param issuedDocsLastMonth (Cantidad de documentos emitidos en el mes anterior)
+	 * @param annualCharge (Indica si se debe realizar cobro de la anualidad)
+	 * @param reFillPlan (Indica si se debe realizar cobro de la anualidad por haber consumido su paquete de documentos o si se 
+	 * deben cobrar documentos emitidos adicionales)
+	 * @param discount (Porcentaje de descuento que aplica en su primer año de cobro)
+	 * @return LinkedHashMap que contiene el concepto, las cantidades y sus respectivos valores
+	 */
+	public LinkedHashMap<String, Long[]> getAnnualBillDetail(Long issuedDocQuantity, Long issuedDocsLastMonth, 
 			boolean annualCharge, boolean reFillPlan, Long discount) {
 		int limit = 0;
-		LinkedHashMap<Long, Long[]> invoiceDetailMap = new LinkedHashMap<>();
+		LinkedHashMap<String, Long[]> invoiceDetailMap = new LinkedHashMap<>();
 		limit = this.documentQuantity;
 		
 		if (!reFillPlan) {
@@ -136,12 +165,16 @@ public class PaymentType {
 				Long[] valQuant = new Long[2];
 				valQuant[0] = issuedDocQuantity - issuedDocsLastMonth;
 				valQuant[1] = this.documentPrice;
-				invoiceDetailMap.put(Long.parseLong(CONCEPTS[1][0]), valQuant);
+				invoiceDetailMap.put(modulePlan.equals("FE") ? CONCEPTS[1][0] 
+						: modulePlan.equals("NE") ? CONCEPTS[5][0]
+						: CONCEPTS[9][0], valQuant);
 			} else if (issuedDocQuantity > limit){
 				Long[] valQuant = new Long[2];
 				valQuant[0] = issuedDocQuantity - limit;
 				valQuant[1] = this.documentPrice;
-				invoiceDetailMap.put(Long.parseLong(CONCEPTS[1][0]), valQuant);
+				invoiceDetailMap.put(modulePlan.equals("FE") ? CONCEPTS[1][0] 
+						: modulePlan.equals("NE") ? CONCEPTS[5][0]
+						: CONCEPTS[9][0], valQuant);
 			}			
 		}
 		
@@ -149,13 +182,19 @@ public class PaymentType {
 			Long[] valQuant = new Long[2];
 			valQuant[0] = 1L;
 			valQuant[1] = discount != null && discount > 0L ? this.packagePrice * (discount / 100) : this.packagePrice;
-			invoiceDetailMap.put(modulePlan.equals("FE") ? Long.parseLong(CONCEPTS[3][0])
-							: Long.parseLong(CONCEPTS[7][0]), valQuant);
+			invoiceDetailMap.put(modulePlan.equals("FE") ? CONCEPTS[3][0]
+							: modulePlan.equals("NE") ? CONCEPTS[8][0]
+							: CONCEPTS[11][0], valQuant);
 		}
 		
 		return invoiceDetailMap;
 	}
 	
+	/**
+	 * Obtiene la cantidad de documentos que contiene un plan según su nombre
+	 * @param packageName (Nombre del paquete)
+	 * @return Integer que indica la cantidad de documentos del paquete
+	 */
 	public Integer getDocumentQuantityByPackageName(String packageName) {
 		switch (packageName) {
 			case "Fantasía": return 5;
@@ -179,6 +218,12 @@ public class PaymentType {
 		return null;
 	}
 	
+	/**
+	 * Extrae el valor por cada documento emitido contenido en un JSON de tarifas con la siguiente estructura:
+	 * {"Rangos":[{"Desde":0,"Hasta":1000,"Valor":100},{....}]}
+	 * @param docQuantity (Cantidad de documentos emitidos)
+	 * @return Long con el valor que se debe cobrar por cada documento emitido
+	 */
 	public Long getPricePerDocument(int docQuantity) {
 		LinkedHashMap<String, Long> map = new LinkedHashMap<>();
 		JSONObject j = new JSONObject(this.costRange);
@@ -196,6 +241,12 @@ public class PaymentType {
 		return map.get("Valor");
 	}
 	
+	/**
+	 * Extrae el valor de un paquete de documentos contenidos en un JSON de tarifas con la siguiente estructura:
+	 * {"Planes":[{"Nombre":"Plan S","Desde":0,"Hasta":100,"Valor":29900},{....}]}
+	 * @param docQuantity (Cantidad de documentos emitidos)
+	 * @return Long con el valor que se debe cobrar por el paquete de acuerdo con los documentos emitidos
+	 */
 	public Long getPricePerJsonPackage(String pckgName) {
 		LinkedHashMap<String, Long> map = new LinkedHashMap<>();
 		JSONObject j = new JSONObject(this.costRange);
@@ -208,8 +259,15 @@ public class PaymentType {
 		return map.get(pckgName);
 	}
 	
-	public String getJsonPackageName(int docQuantity) {
+	/**
+	 * Extrae los detalles de un paquete de documentos contenidos en un JSON de tarifas con la siguiente estructura:
+	 * {"Planes":[{"Nombre":"Plan S","Desde":0,"Hasta":100,"Valor":29900},{....}]}
+	 * @param docQuantity (Cantidad de documentos emitidos)
+	 * @return List: Con la siguiente información según la posición (0) Nombre, (1) Desde, (2) Hasta, (3) Valor
+	 */
+	public List<String> getJsonPackageInfo(int docQuantity) {
 		LinkedHashMap<String, String> map = new LinkedHashMap<>();
+		ArrayList<String> responseList = new ArrayList<>();
 		JSONObject j = new JSONObject(this.costRange);
 		j.getJSONArray("Planes").forEach(x -> {
 			JSONObject object = new JSONObject(x.toString());
@@ -218,11 +276,19 @@ public class PaymentType {
 			Long max = Long.parseLong(object.get("Hasta").toString());
 			if (docQuantity >= min && docQuantity <= max) {
 				map.put("Nombre", name);
+				responseList.add(name);
+				responseList.add(object.get("Desde").toString());
+				responseList.add(object.get("Hasta").toString());
+				responseList.add(object.get("Valor").toString());
 			}
 		});
-		return map.get("Nombre");
+		return responseList;
 	}
 	
+	/**
+	 * Genera la descripción del plan de facturación electrónica con los atributos del objeto padre que invoque el método.
+	 * Dicha descripción se almacena en el atributo "planDescription" del objeto.
+	 */
 	public void generateFePlanDescription() {
 		switch (this.discriminatorType) {
 			case 1:
@@ -254,6 +320,10 @@ public class PaymentType {
 		}
 	}
 	
+	/**
+	 * Genera la descripción del plan de nómina electrónica con los atributos del objeto padre que invoque el método.
+	 * Dicha descripción se almacena en el atributo "planDescription" del objeto.
+	 */
 	public void generateNePlanDescription(String description) {
 		if (this.paymentFrequency.getFrequencyId() == 4) {
 			this.planDescription = "Mensualidad fija " + description + " (" +  this.documentQuantity + ").";
@@ -262,6 +332,11 @@ public class PaymentType {
 		}
 	}
 	
+	/**
+	 * Genera la descripción del plan de nómina electrónica con los atributos del objeto padre que invoque el método y 
+	 * ajustando los valores con el IPC que les aplique.
+	 * Dicha descripción se almacena en el atributo "planDescription" del objeto.
+	 */
 	public String getGenerateAdjustedPlanDescription(Double increaseRate) {
 		switch (this.discriminatorType) {
 			case 1:

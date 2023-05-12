@@ -65,7 +65,7 @@ public class FaceldiReportRow {
 	private String clTelefono;
 	private String clCelular;
 	private String clCorreo; //Add the finance ones
-	private Long prCodigoProducto;
+	private String prCodigoProducto;
 	private String prDescripcion;
 	private String prDescripcionAdicional;
 	private static final String prInformacionAdicionalNombre = "";

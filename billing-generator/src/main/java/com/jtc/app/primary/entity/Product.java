@@ -27,7 +27,7 @@ public class Product {
 	
 	@Id
 	@Column(name = "product_id")
-	private Long productId;
+	private String productId;
 	@Column(name = "product_name")
 	private String description;
 	@JsonIgnore
