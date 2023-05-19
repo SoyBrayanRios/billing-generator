@@ -19,6 +19,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Esta clase define un objeto que contiene los datos básicos necesarios de los clientes de facturación, nómina y 
+ * documento soporte que se requieren para generar los archivos planos de Faceldi y SMART.
+ * Estos datos se encuentran almacenados en la tabla "client" de la base de datos.
+ *
+ */
 @Entity
 @Table(name = "client")
 @NoArgsConstructor

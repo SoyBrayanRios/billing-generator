@@ -4,6 +4,10 @@ import java.util.List;
 
 import com.jtc.app.primary.entity.Client;
 
+/**
+ * Esta interface define los servicios relacionados a la clase Client.
+ *
+ */
 public interface ClientService {
 
 	public Client saveClient(Client client) throws Exception;

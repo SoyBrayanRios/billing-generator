@@ -5,6 +5,10 @@ import java.util.List;
 import com.jtc.app.primary.entity.Frequency;
 import com.jtc.app.primary.entity.PaymentType;
 
+/**
+ * Esta interface define los servicios relacionados a la clase PaymentType.
+ *
+ */
 public interface PaymentTypeService {
 
 	public PaymentType savePaymentType(PaymentType paymentType) throws Exception;

@@ -4,6 +4,10 @@ import java.util.List;
 
 import com.jtc.app.primary.entity.Branch;
 
+/**
+ * Esta interface define los servicios relacionados a la clase Branch.
+ *
+ */
 public interface BranchService {
 	
 	public Branch saveBranch(Branch branch) throws Exception;

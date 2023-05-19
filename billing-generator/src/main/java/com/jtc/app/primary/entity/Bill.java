@@ -20,6 +20,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Esta clase define un objeto que contiene los datos de una factura que posteriormente será procesada y colocada en los 
+ * archivos planos que se cargan en Faceldi.
+ * Estos datos se encuentran almacenados en la tabla "bill" de la base de datos.
+ *
+ */
 @Entity
 @Table(name = "bill")
 @NoArgsConstructor

@@ -9,6 +9,12 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * Esta clase define un objeto que contiene los datos básicos de las facturas de nómina que se encuentran almacenadas en
+ * la base de datos de producción de Faceldi.
+ * Estos datos se encuentran almacenados en la tabla "ne_documentos" de la base de datos.
+ *
+ */
 @Entity
 @Table(name = "ne_documentos")
 @Getter

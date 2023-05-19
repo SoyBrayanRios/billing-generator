@@ -7,6 +7,11 @@ import javax.persistence.Embeddable;
 
 import lombok.Data;
 
+/**
+ * Esta clase define un objeto que contiene los datos de la llave primaria de la tabla "ne_documentos" y
+ * que se encuentra embebido en la clase NEInvoice.
+ *
+ */
 @Embeddable
 @Data
 public class NEInvoiceId implements Serializable {
@@ -18,9 +23,18 @@ public class NEInvoiceId implements Serializable {
 	@Column(name = "numero")
 	private String numero;
 	
+	/**
+	 * Método contructor vacío de la llave primaria.
+	 */
 	public NEInvoiceId() {
 	}
 
+	/**
+	 * Método contructor de la llave primaria de la factura.
+	 * @param id_sucursal_empleador (ID de la sucursal emisora).
+	 * @param tipo (Tipo de documento).
+	 * @param numero (Número del documento).
+	 */
 	public NEInvoiceId(Long id_sucursal_empleador, Long tipo, String numero) {
 		super();
 		this.id_sucursal_empleador = id_sucursal_empleador;

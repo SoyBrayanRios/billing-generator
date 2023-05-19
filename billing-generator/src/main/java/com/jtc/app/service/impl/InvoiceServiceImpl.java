@@ -36,8 +36,8 @@ public class InvoiceServiceImpl implements InvoiceService {
 	}
 
 	@Override
-	public Invoice getInvoiceByBranchNumber(Long branchId, String invoiceNumber, Long buyerId, Date issuedDate) {
-		return invoiceRepository.getInvoiceByBranchNumber(branchId, invoiceNumber, buyerId, issuedDate);
+	public Invoice getInvoiceByBranchNumber(Long branchId, String invoiceNumber, Date issuedDate) {
+		return invoiceRepository.getInvoiceByBranchNumber(branchId, invoiceNumber, issuedDate);
 	}
 
 	@Override
@@ -74,8 +74,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 	public List<Invoice> updateAllInvoices() {
 		List<FEInvoice> feInvoices = feInvoiceRepository.findAllIssuedInvoice();
 		feInvoices.forEach(invoice -> {
-			Invoice tempInvoice = invoiceRepository.getInvoiceByBranchNumber(invoice.getTransmitterId(), invoice.getInvoiceNumber(),
-					invoice.getClientId(), invoice.getIssueDate());
+			Invoice tempInvoice = invoiceRepository.getInvoiceByBranchNumber(invoice.getTransmitterId(), invoice.getInvoiceNumber(), invoice.getIssueDate());
 			if (tempInvoice == null) {
 				tempInvoice = new Invoice();
 				tempInvoice.setInvoiceNumber(invoice.getInvoiceNumber());
@@ -105,8 +104,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 	public List<Invoice> updateInvoicesByYearMonth(Long year, Long month) {
 		List<FEInvoice> feInvoices = feInvoiceRepository.findIssuedInvoicesByYearMonth(year, month);
 		feInvoices.forEach(invoice -> {
-			Invoice tempInvoice = invoiceRepository.getInvoiceByBranchNumber(invoice.getTransmitterId(), invoice.getInvoiceNumber(), 
-					invoice.getClientId(), invoice.getIssueDate());
+			Invoice tempInvoice = invoiceRepository.getInvoiceByBranchNumber(invoice.getTransmitterId(), invoice.getInvoiceNumber(), invoice.getIssueDate());
 			if (tempInvoice == null) {
 				tempInvoice = new Invoice();
 				tempInvoice.setInvoiceNumber(invoice.getInvoiceNumber());

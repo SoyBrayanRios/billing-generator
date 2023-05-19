@@ -18,6 +18,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Esta clase define un objeto que contiene los datos de una frequencia de cobro. Ejm: mensual, anual, etc.
+ * Estos datos se encuentran almacenados en la tabla "frequency" de la base de datos.
+ *
+ */
 @Entity
 @Table(name = "frequency")
 @AllArgsConstructor

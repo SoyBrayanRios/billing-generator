@@ -71,6 +71,12 @@ public class BillServiceImpl implements BillService {
 	private Double[][] ipcList = { { 2018.0, 0.0 }, { 2019.0, 0.0380 }, { 2020.0, 0.0161 }, { 2021.0, 0.0562 },
 			{ 2022.0, 0.1312 }, { 2023.0, 0.0 } };
 
+	/**
+	 * Permite calcular el porcentaje de incremento por IPC que tendrá un plan según la fecha de firma del contrato.
+	 * @param contract (El contrato que será evaluado).
+	 * @param billingYear (Año en el que se genera la facturación).
+	 * @return El porcentaje de aumento de IPC.
+	 */
 	public Double calculateIpcIncrease(Contract contract, Long billingYear) {
 		Double increase = 1.0;
 		if (contract.getIpcIncrease() && !contract.getModule().equals("NE")) {
@@ -188,6 +194,12 @@ public class BillServiceImpl implements BillService {
 		return this.tempSmartFile;
 	}
 
+	/**
+	 * Ajusta el plan de pago si es de tipo autoajustable en la escala de Plan M, Plan L y Plan XL de FE;
+	 * lo anterior, según la cantidad de documentos emitidos en el mes. 
+	 * @param year (Año en que se genera la facturación).
+	 * @param month (Mes en que se genera la facturación).
+	 */
 	public void adjustContracts(Long year, Long month) {
 		System.out.println("Running adjustContracts - FE");
 		List<Contract> contracts = contractRepository
@@ -195,7 +207,6 @@ public class BillServiceImpl implements BillService {
 						&& contract.getPaymentPlan().getSelfAdjusting() && contract.getBranch().getFE())
 				.collect(Collectors.toList());
 		contracts.forEach(contract -> {
-			System.out.println(contract.getContractId());
 			PaymentType tempPlan = contract.getPaymentPlan();
 			InvoiceResume tempResume = invoiceResumeRepository.findByBranchYearMonth(contract.getBranch().getBranchId(),
 					year, month, "FE");
@@ -227,6 +238,15 @@ public class BillServiceImpl implements BillService {
 		});
 	}
 
+	/**
+	 * Evalua todas las empresas que emitieron documentos en el mes para determinar el cobro que se les debe realizar.
+	 * @param year (Año en que se genera la facturación).
+	 * @param month (Mes en que se genera la facturación).
+	 * @param invoiceDetailFullMap (Variable en la que se guarda el detalle de todas las facturas que se van a generar).
+	 * @param resumes (Listado de conteos de facturasa correspondientes al periodo).
+	 * @param update (true si los cambios se deben guardar en la base de datos de la aplicación. En su defecto, false).
+	 * @param module (Acrónimo que indica a cual servicio corresponde la ejecución de facturación en curso, bien sea FE, NE o DS).
+	 */
 	public void getBillsToCollectByMonthlyIssuedInvoices(Long year, Long month,
 			LinkedHashMap<Long, LinkedHashMap<String, Long[]>> invoiceDetailFullMap, List<InvoiceResume> resumes,
 			Boolean update, String module) {
@@ -242,6 +262,7 @@ public class BillServiceImpl implements BillService {
 			Contract contract = contractRepository.findByBranchId(resume.getBranch().getBranchId(), module);
 
 			if (contract != null) {
+				System.out.println(contract.getContractId());
 				if (cancellationRepository.findByContractId(contract.getContractId()) == null) {
 					boolean skip = Optional.ofNullable(sharedContractsFilter.contains(contract.getContractId()))
 							.orElse(false);
@@ -254,8 +275,8 @@ public class BillServiceImpl implements BillService {
 									|| tempPlan.getDiscriminatorType() == 6)
 									&& tempPlan.getPaymentFrequency().getFrequencyId() == 8) {
 								boolean chargeSubscription = false;
-								Calendar calendar = Calendar.getInstance();
-								Calendar dinamycCalendar = Calendar.getInstance();
+								Calendar calendar = Calendar.getInstance(); //Fecha actual de calculo de la facturación
+								Calendar dinamycCalendar = Calendar.getInstance(); //Fecha de referencia del último cobro
 								calendar.set(year.intValue(), month.intValue() - 1, 1, 0, 0, 0);
 								dinamycCalendar.set(contractDate.getYear() + 1900, contractDate.getMonth(),
 										contractDate.getDate(), 23, 59, 59);
@@ -322,10 +343,7 @@ public class BillServiceImpl implements BillService {
 													.before(endReferenceCalendar.getTime()); startReferenceCalendar.add(
 															Calendar.DATE,
 															1), date = startReferenceCalendar.getTime()) {
-												// System.out.println(date);
-												// Long tempDocsCount =
-												// contractFactory.getIssuedInvoicesDuringContract(module,
-												// resume.getBranch().getBranchId(), dinamycCalendar.getTime(), date);
+
 												Long tempDocsCount = module.equals("FE")
 														? invoiceRepository.getFeIssuedInvoicesDuringContract(
 																resume.getBranch().getBranchId(),
@@ -342,8 +360,8 @@ public class BillServiceImpl implements BillService {
 													if (date.getMonth() > (int) (month - 1)) {
 														startReferenceCalendar.add(Calendar.DATE, -1);
 													}
-													System.out.println("Refill: " + contract.getContractId() + " - "
-															+ tempDocsCount + " - " + startReferenceCalendar.getTime());
+													/*System.out.println("Refill: " + contract.getContractId() + " - "
+															+ tempDocsCount + " - " + startReferenceCalendar.getTime());*/
 													contract.setReferencePaymentDate(startReferenceCalendar.getTime());
 													endReferenceCalendar.setTime(date);
 												}
@@ -381,10 +399,6 @@ public class BillServiceImpl implements BillService {
 									}
 								}
 								calendar.set(year.intValue(), month.intValue() - 1, 1);
-								// Long issuedDocsLastMonth =
-								// contractFactory.getIssuedInvoicesDuringContract(module,
-								// resume.getBranch().getBranchId(), dinamycCalendar.getTime(),
-								// calendar.getTime());
 								Long issuedDocsLastMonth = module.equals("FE")
 										? invoiceRepository.getFeIssuedInvoicesDuringContract(
 												resume.getBranch().getBranchId(), dinamycCalendar.getTime(),
@@ -439,6 +453,14 @@ public class BillServiceImpl implements BillService {
 		}
 	}
 
+	/**
+	 * Evalua todas las empresas que no emitieron documentos en el mes para determinar el cobro que se les debe realizar.
+	 * @param year (Año en que se genera la facturación).
+	 * @param month (Mes en que se genera la facturación).
+	 * @param invoiceDetailFullMap (Variable en la que se guarda el detalle de todas las facturas que se van a generar).
+	 * @param update (true si los cambios se deben guardar en la base de datos de la aplicación. En su defecto, false).
+	 * @param module (Acrónimo que indica a cual servicio corresponde la ejecución de facturación en curso, bien sea FE, NE o DS).
+	 */
 	public void getBillsToCollectByOtherCharges(Long year, Long month,
 			LinkedHashMap<Long, LinkedHashMap<String, Long[]>> invoiceDetailFullMap, Boolean update, String module) {
 		System.out.println("Running getBillsToCollectByOtherCharges - " + module);
@@ -457,6 +479,7 @@ public class BillServiceImpl implements BillService {
 				.collect(Collectors.toList());// TODO Check
 
 		contractsFiltered.forEach(contract -> {
+			System.out.println(contract.getContractId());
 			LinkedHashMap<String, Long[]> invoiceDetailMap = new LinkedHashMap<>();
 			if (!contract.getSharedContract()) {
 				Long[] valQuant = new Long[2];
@@ -482,7 +505,7 @@ public class BillServiceImpl implements BillService {
 							Calendar calendar = Calendar.getInstance();
 							calendar.set(year.intValue(), month.intValue() - 1, contractDate.getDate());
 							contract.setReferencePaymentDate(calendar.getTime());
-							System.out.println("Anualidad " + contract.getContractId() + " - " + calendar.getTime());
+							//System.out.println("Anualidad " + contract.getContractId() + " - " + calendar.getTime());
 
 							if (update) {
 								try {
@@ -508,6 +531,16 @@ public class BillServiceImpl implements BillService {
 		});
 	}
 
+	/**
+	 * Evalua todas las empresas que emitieron documentos en el mes para determinar el cobro que se les debe realizar.
+	 * Dichas empresas corresponden a contratos compartidos.
+	 * @param year (Año en que se genera la facturación).
+	 * @param month (Mes en que se genera la facturación).
+	 * @param invoiceDetailFullMap (Variable en la que se guarda el detalle de todas las facturas que se van a generar).
+	 * @param resumes (Listado de conteos de facturasa correspondientes al periodo).
+	 * @param update (true si los cambios se deben guardar en la base de datos de la aplicación. En su defecto, false).
+	 * @param module (Acrónimo que indica a cual servicio corresponde la ejecución de facturación en curso, bien sea FE, NE o DS).
+	 */
 	public void getBillsToCollectDueSharedContracts(Long year, Long month,
 			LinkedHashMap<Long, LinkedHashMap<String, Long[]>> invoiceDetailFullMap, List<InvoiceResume> resumes,
 			Boolean update, String module) {
@@ -612,7 +645,7 @@ public class BillServiceImpl implements BillService {
 								for (Date date = startReferenceCalendar.getTime(); date
 										.before(endReferenceCalendar.getTime()); startReferenceCalendar
 												.add(Calendar.DATE, 1), date = startReferenceCalendar.getTime()) {
-									System.out.println(date);
+									//System.out.println(date);
 									Long tempDocsCount = 0L;
 									for (Long branchId : tempBranches) {
 										// tempDocsCount += contractFactory.getIssuedInvoicesDuringContract(module,
@@ -631,8 +664,8 @@ public class BillServiceImpl implements BillService {
 										if (startReferenceCalendar.get(Calendar.MONTH) > (int) (month - 1L)) {
 											startReferenceCalendar.add(Calendar.DATE, -1);
 										}
-										System.out.println("Refill: " + contract.getContractId() + " - " + tempDocsCount
-												+ " - " + startReferenceCalendar.getTime());
+										/*System.out.println("Refill: " + contract.getContractId() + " - " + tempDocsCount
+												+ " - " + startReferenceCalendar.getTime());*/
 										contract.setReferencePaymentDate(startReferenceCalendar.getTime());
 										endReferenceCalendar.setTime(date);
 									}
@@ -726,6 +759,17 @@ public class BillServiceImpl implements BillService {
 
 	}
 
+	/**
+	 * Evalua si una sucursal tiene pendiente el cobro de mantenimiento y/o implementación.
+	 * @param year (Año en que se genera la facturación).
+	 * @param month (Mes en que se genera la facturación).
+	 * @param branchId (ID de la sucursal).
+	 * @param contract (Contrato que se va a evaluar).
+	 * @param invoiceDetailMap (Variable en la que se almacena el detalle de la factura "concepto, cantidad y valor").
+	 * @param invoiceDetailFullMap (Variable en la que se guarda el detalle de todas las facturas que se van a generar).
+	 * @param (true si los cambios se deben guardar en la base de datos de la aplicación. En su defecto, false).
+	 * @param module (Acrónimo que indica a cual servicio corresponde la ejecución de facturación en curso, bien sea FE, NE o DS).
+	 */
 	public void addMoreDetailsToPay(Long year, Long month, Long branchId, Contract contract,
 			LinkedHashMap<String, Long[]> invoiceDetailMap,
 			LinkedHashMap<Long, LinkedHashMap<String, Long[]>> invoiceDetailFullMap, Boolean update, String module) {
@@ -788,6 +832,15 @@ public class BillServiceImpl implements BillService {
 		}
 	}
 
+	/**
+	 * Guarda las facturas que se generaron en el mes, bien sea en la base de datos o en una variable por si se está realizando
+	 * una simulación.
+	 * @param year (Año en que se genera la facturación).
+	 * @param month (Mes en que se genera la facturación).
+	 * @param invoiceDetailFullMap (Variable en la que se encuentra todo el detalle de los conceptos que se van a cobrar en las facturas).
+	 * @param save (true si se debe guardar en la base de datos, o en su defecto, false).
+	 * @param module (Acrónimo que indica a cual servicio corresponde la ejecución de facturación en curso, bien sea FE, NE o DS).
+	 */
 	public void saveBills(Long year, Long month, LinkedHashMap<Long, LinkedHashMap<String, Long[]>> invoiceDetailFullMap,
 			Boolean save, String module) {
 		System.out.println("Running saveBills");
@@ -868,6 +921,11 @@ public class BillServiceImpl implements BillService {
 		}
 	}
 
+	/**
+	 * Elimina todos los conceptos de cobro que se encuentren en cero.
+	 * @param invoiceDetailMap (Detalle de la factura que se está evaluando).
+	 * @return LinkedHashMap sin los conceptos que se encuentran en cero.
+	 */
 	public LinkedHashMap<String, Long[]> cleanDetailMap(LinkedHashMap<String, Long[]> invoiceDetailMap) {
 		List<String> keysToRemove = new ArrayList<>();
 		invoiceDetailMap.forEach((k, v) -> {
@@ -883,6 +941,15 @@ public class BillServiceImpl implements BillService {
 		return invoiceDetailMap;
 	}
 
+	/**
+	 * Genera la descripción que tendrá la factura
+	 * @param year (Año en que se genera la facturación).
+	 * @param month (Mes en que se genera la facturación).
+	 * @param contract (Contrato que se está evaluando)
+	 * @param invoiceDetailMap (Variable en la que se almacena el detalle de la factura "concepto, cantidad y valor").
+	 * @param module (Acrónimo que indica a cual servicio corresponde la ejecución de facturación en curso, bien sea FE, NE o DS).
+	 * @return La descripción que tendra la factura generada.
+	 */
 	public String generateInvoiceDescription(Long year, Long month, Contract contract,
 			LinkedHashMap<String, Long[]> invoiceDetailMap, String module) {
 		cleanDetailMap(invoiceDetailMap);
@@ -926,22 +993,11 @@ public class BillServiceImpl implements BillService {
 		return description + branchText;
 	}
 
-	/*
-	 * public String generateBaseDescription(Long year, Long month, Long product,
-	 * ContractFE contract) { String monthString = getMonthFromNumber(month); String
-	 * branchName = contract.getBranch().getCode() + " - " +
-	 * contract.getBranch().getName(); String description = ""; switch
-	 * (product.intValue()) { case 190: description =
-	 * "Cobro de implementación Facturación electrónica sucursal \"" + branchName +
-	 * "\". "; break; case 194: description = "Anualidad " + monthString + " " +
-	 * year + " - " + (year + 1) + ". "; break; case 196: description =
-	 * "Mantenimiento Facturación Electrónica entre " + monthString + "-" + year +
-	 * " y " + monthString + "-" + (year + 1) + " sucursal \"" + branchName +
-	 * "\". "; break; case 200: description =
-	 * "Mantenimiento Facturación Electrónica periodos anteriores vencidos sucursal \""
-	 * + branchName + "\". "; break; default: } return description; }
+	/**
+	 * Obtiene el nombre del mes según el número indicado.
+	 * @param month (Mes a evaluar entre 1 a 12)
+	 * @return El nombre del mes.
 	 */
-
 	public String getMonthFromNumber(Long month) {
 		switch (month.intValue()) {
 		case 1:

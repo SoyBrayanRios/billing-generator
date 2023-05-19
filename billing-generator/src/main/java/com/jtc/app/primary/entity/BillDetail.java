@@ -12,6 +12,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Esta clase define un objeto que contiene la información general de cada ejecución de facturación 
+ * que se haya guardado en la base de datos de Kosmos, indicando el año, mes, No. factura inicial y final 
+ * junto con el módulo al que pertenece esa ejecución.
+ * Estos datos se encuentran almacenados en la tabla "bill_resume" de la base de datos.
+ *
+ */
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity

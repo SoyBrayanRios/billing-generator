@@ -17,6 +17,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Esta clase define un objeto que contiene los datos de un producto de FE, NE o DS.
+ * Estos datos se encuentran almacenados en la tabla "product" de la base de datos.
+ *
+ */
 @Entity
 @Table(name = "product")
 @NoArgsConstructor

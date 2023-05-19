@@ -4,6 +4,10 @@ import java.util.List;
 
 import com.jtc.app.primary.entity.Alliance;
 
+/**
+ * Esta interface define los servicios relacionados a la clase Alliance.
+ *
+ */
 public interface AllianceService {
 	
 	public Alliance saveAlliance(Alliance alliance) throws Exception;

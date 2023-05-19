@@ -5,6 +5,10 @@ import java.util.List;
 import com.jtc.app.primary.entity.Frequency;
 import com.jtc.app.primary.entity.Maintenance;
 
+/**
+ * Esta interface define los servicios relacionados a la clase Maintenance.
+ *
+ */
 public interface MaintenanceService {
 	
 	public Maintenance saveMaintenance(Maintenance maintenance) throws Exception;

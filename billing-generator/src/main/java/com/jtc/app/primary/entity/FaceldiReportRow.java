@@ -8,12 +8,17 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Esta clase define un objeto que contiene los datos de una fila del archivo
+ * plano para cargue en Faceldi.
+ *
+ */
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
 public class FaceldiReportRow {
-	
+
 	private static final Integer fcTipoOperacion = 10;
 	private static final String fcPrefijo = "";
 	private Long fcConsecutivo;
@@ -64,7 +69,7 @@ public class FaceldiReportRow {
 	private static final String clNombreContacto = "No aplica";
 	private String clTelefono;
 	private String clCelular;
-	private String clCorreo; //Add the finance ones
+	private String clCorreo; // Add the finance ones
 	private String prCodigoProducto;
 	private String prDescripcion;
 	private String prDescripcionAdicional;
@@ -111,236 +116,310 @@ public class FaceldiReportRow {
 	private static final String campo95 = "";
 	private static final String campo96 = "";
 	private static final String campo97 = "";
-	
+
 	public static Integer getFctipooperacion() {
 		return fcTipoOperacion;
 	}
+
 	public static String getFcprefijo() {
 		return fcPrefijo;
 	}
+
 	public static String getFctipodocumento() {
 		return fcTipoDocumento;
 	}
+
 	public static String getFcdivisa() {
 		return fcDivisa;
 	}
+
 	public static Integer getFctasacambio() {
 		return fcTasaCambio;
 	}
+
 	public static String getNtfacturaaplicada() {
 		return ntFacturaAplicada;
 	}
+
 	public static String getNtconceptonotas() {
 		return ntConceptoNotas;
 	}
+
 	public static String getFcordenpedido() {
 		return fcOrdenPedido;
 	}
+
 	public static String getFcordenentrega() {
 		return fcOrdenEntrega;
 	}
+
 	public static String getFcreferenciatransaccion() {
 		return fcReferenciaTransaccion;
 	}
+
 	public static String getFcnumeroconvenio() {
 		return fcNumeroConvenio;
 	}
+
 	public static String getFcnumeropedido() {
 		return fcNumeroPedido;
 	}
+
 	public static String getFcdocumentoreferenciado() {
 		return fcDocumentoReferenciado;
 	}
+
 	public static Integer getEmcodigosucursal() {
 		return emCodigoSucursal;
 	}
+
 	public static Integer getFcformapago() {
 		return fcFormaPago;
 	}
+
 	public static Integer getFcmediopago() {
 		return fcMedioPago;
 	}
+
 	public static Integer getFcidanticipo() {
 		return fcIdAnticipo;
 	}
+
 	public static Integer getFcvaloranticipo() {
 		return fcValorAnticipo;
 	}
+
 	public static String getFcfechaanticipo() {
 		return fcFechaAnticipo;
 	}
+
 	public static Integer getFcporcentajedescuento() {
 		return fcPorcentajeDescuento;
 	}
+
 	public static String getFccodigodescuento() {
 		return fcCodigoDescuento;
 	}
+
 	public static Integer getFcporcentajecargo() {
 		return fcPorcentajeCargo;
 	}
+
 	public static String getClcodigopais() {
 		return clCodigoPais;
 	}
+
 	public static Integer getClcodadquiriente() {
 		return clCodAdquiriente;
 	}
+
 	public static String getClcodigorespfiscales() {
 		return clCodigoRespFiscales;
 	}
+
 	public static String getClcodigopais2() {
 		return clCodigoPais2;
 	}
+
 	public static String getClmatriculamercantil() {
 		return clMatriculaMercantil;
 	}
+
 	public static String getClnombrecontacto() {
 		return clNombreContacto;
 	}
+
 	public static String getPrinformacionadicionalnombre() {
 		return prInformacionAdicionalNombre;
 	}
+
 	public static String getPrinformacionadicionalvalor() {
 		return prInformacionAdicionalValor;
 	}
+
 	public static Integer getPrunidadmedida() {
 		return prUnidadMedida;
 	}
+
 	public static Integer getPrporcentajedescuento() {
 		return prPorcentajeDescuento;
 	}
+
 	public static Integer getPrporcentajecargo() {
 		return prPorcentajeCargo;
 	}
+
 	public static String getPrrazondescuento() {
 		return prRazonDescuento;
 	}
+
 	public static Integer getPriva() {
 		return prIva;
 	}
+
 	public static Integer getPric() {
 		return prIc;
 	}
+
 	public static Integer getPrica() {
 		return prIca;
 	}
+
 	public static Integer getPrinc() {
 		return prInc;
 	}
+
 	public static Integer getPrreteiva() {
 		return prReteIva;
 	}
+
 	public static Integer getPrretefuente() {
 		return prReteFuente;
 	}
+
 	public static Integer getPrreteica() {
 		return prReteIca;
 	}
+
 	public static Integer getPrftohorticultura() {
 		return prFtoHorticultura;
 	}
+
 	public static Integer getPrtimbre() {
 		return prTimbre;
 	}
+
 	public static Integer getPrbolsas() {
 		return prBolsas;
 	}
+
 	public static Integer getPrincarbono() {
 		return prIncarbono;
 	}
+
 	public static Integer getPrincombustibles() {
 		return prInCombustibles;
 	}
+
 	public static Integer getPrsobretasacombustibles() {
 		return prSobretasaCombustibles;
 	}
+
 	public static Integer getPrsordicom() {
 		return prSordicom;
 	}
+
 	public static Integer getProtrascontribuciones() {
 		return prOtrasContribuciones;
 	}
+
 	public static String getPrmarcaproducto() {
 		return prMarcaProducto;
 	}
+
 	public static String getPrmodeloproducto() {
 		return prModeloProducto;
 	}
+
 	public static String getPrtipoidmandante() {
 		return prTipoIdMandante;
 	}
+
 	public static String getPrnumeroidmandante() {
 		return prNumeroIdMandante;
 	}
+
 	public static String getExpcondicionesentrega() {
 		return expCondicionesEntrega;
 	}
+
 	public static String getExpsubpartidaarancelaria() {
 		return expSubpartidaArancelaria;
 	}
+
 	public static String getCampo85() {
 		return campo85;
 	}
+
 	public static String getEntdepmunicipio() {
 		return entDepMunicipio;
 	}
+
 	public static String getEntcodigopostal() {
 		return entCodigoPostal;
 	}
+
 	public static String getEntdireccionentrega() {
 		return entDireccionEntrega;
 	}
+
 	public static String getCampo89() {
 		return campo89;
 	}
+
 	public static String getOtrelaborado() {
 		return otrElaborado;
 	}
+
 	public static String getOtrrevisado() {
 		return otrRevisado;
 	}
+
 	public static String getOtrvendedor() {
 		return otrVendedor;
 	}
+
 	public static String getFcobservacionesitem() {
 		return fcObservacionesItem;
 	}
+
 	public static String getCampo94() {
 		return campo94;
 	}
+
 	public static String getCampo95() {
 		return campo95;
 	}
+
 	public static String getCampo96() {
 		return campo96;
 	}
+
 	public static String getCampo97() {
 		return campo97;
 	}
+
+	/**
+	 * Convierte los atributos del objeto en un array que contiene todos los datos
+	 * requeridos para construir una fila del archivo plano de Faceldi.
+	 */
 	@Override
 	public String toString() {
 		SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd");
-		return  fcTipoOperacion + ";" + fcPrefijo + ";" + fcConsecutivo + ";" + sf.format(fcFechaDocumento)
-				+ ";" + sf.format(fcFechaVencimiento) + ";" + fcTipoDocumento + ";" + fcObservacionDocumento
-				+ ";" + fcDivisa + ";" + fcTasaCambio + ";" + sf.format(fcFechaTasaCambio) + ";" + sf.format(fcFechaInicioPeriodoFacturacion)
-				+ ";" + sf.format(fcFechaFinPeriodoFacturacion) + ";" + ntFacturaAplicada + ";" + ntConceptoNotas + ";" + fcReferenciaOrdenCompra
-				+ ";" + fcOrdenPedido + ";" + fcOrdenEntrega + ";" + fcReferenciaTransaccion + ";" + fcNumeroConvenio 
-				+ ";" + fcNumeroPedido + ";" + fcDocumentoReferenciado + ";" + emCodigoSucursal + ";" + fcFormaPago
-				+ ";" + fcMedioPago + ";" + fcIdAnticipo + ";" + fcValorAnticipo + ";" + fcFechaAnticipo + ";" + fcPorcentajeDescuento
-				+ ";" + fcCodigoDescuento + ";" + fcPorcentajeCargo + ";" + clTipoOrganizacion + ";" + clTipoRegimen
-				+ ";" + clNombreComercial + ";" + clCodigoDepMunicipio + ";" + clCodigoPais + ";" + clCodigoPostal + ";" + clDireccion
-				+ ";" + clNombreLegal + ";" + clTipoIdAdquiriente + ";" + clNumeroIdAdquiriente + ";" + clCodAdquiriente
-				+ ";" + clCodigoRespFiscales + ";" + clCodigoMunicipio + ";" + clCodigoPostal2 + ";" + clDireccion2
-				+ ";" + clCodigoPais2 + ";" + clMatriculaMercantil + ";" + clNombreContacto + ";" + clTelefono + ";" + clCelular
-				+ ";" + clCorreo + ";" + prCodigoProducto + ";" + prDescripcion + ";" + prDescripcionAdicional
-				+ ";" + prInformacionAdicionalNombre + ";" + prInformacionAdicionalValor + ";" + prPrecioUnitario + ";" + prCantidad
-				+ ";" + prUnidadMedida + ";" + prPorcentajeDescuento + ";" + prPorcentajeCargo + ";" + prRazonDescuento
-				+ ";" + prBaseGravable + ";" + prIva + ";" + prIc + ";" + prIca + ";" + prInc + ";" + prReteIva
-				+ ";" + prReteFuente + ";" + prReteIca + ";" + prFtoHorticultura + ";" + prTimbre + ";" + prBolsas + ";" + prIncarbono
-				+ ";" + prInCombustibles + ";" + prSobretasaCombustibles + ";" + prSordicom + ";" + prOtrasContribuciones
-				+ ";" + prMarcaProducto + ";" + prModeloProducto + ";" + prTipoIdMandante + ";" + prNumeroIdMandante
-				+ ";" + expCondicionesEntrega + ";" + expSubpartidaArancelaria + ";" + campo85 + ";" + entDepMunicipio
-				+ ";" + entCodigoPostal + ";" + entDireccionEntrega + ";" + campo89 + ";" + otrElaborado + ";" + otrRevisado
-				+ ";" + otrVendedor + ";" + fcObservacionesItem + ";" + campo94 + ";" + campo95 + ";" + campo96 + ";" + campo97;
-	}	
-	
+		return fcTipoOperacion + ";" + fcPrefijo + ";" + fcConsecutivo + ";" + sf.format(fcFechaDocumento) + ";"
+				+ sf.format(fcFechaVencimiento) + ";" + fcTipoDocumento + ";" + fcObservacionDocumento + ";" + fcDivisa
+				+ ";" + fcTasaCambio + ";" + sf.format(fcFechaTasaCambio) + ";"
+				+ sf.format(fcFechaInicioPeriodoFacturacion) + ";" + sf.format(fcFechaFinPeriodoFacturacion) + ";"
+				+ ntFacturaAplicada + ";" + ntConceptoNotas + ";" + fcReferenciaOrdenCompra + ";" + fcOrdenPedido + ";"
+				+ fcOrdenEntrega + ";" + fcReferenciaTransaccion + ";" + fcNumeroConvenio + ";" + fcNumeroPedido + ";"
+				+ fcDocumentoReferenciado + ";" + emCodigoSucursal + ";" + fcFormaPago + ";" + fcMedioPago + ";"
+				+ fcIdAnticipo + ";" + fcValorAnticipo + ";" + fcFechaAnticipo + ";" + fcPorcentajeDescuento + ";"
+				+ fcCodigoDescuento + ";" + fcPorcentajeCargo + ";" + clTipoOrganizacion + ";" + clTipoRegimen + ";"
+				+ clNombreComercial + ";" + clCodigoDepMunicipio + ";" + clCodigoPais + ";" + clCodigoPostal + ";"
+				+ clDireccion + ";" + clNombreLegal + ";" + clTipoIdAdquiriente + ";" + clNumeroIdAdquiriente + ";"
+				+ clCodAdquiriente + ";" + clCodigoRespFiscales + ";" + clCodigoMunicipio + ";" + clCodigoPostal2 + ";"
+				+ clDireccion2 + ";" + clCodigoPais2 + ";" + clMatriculaMercantil + ";" + clNombreContacto + ";"
+				+ clTelefono + ";" + clCelular + ";" + clCorreo + ";" + prCodigoProducto + ";" + prDescripcion + ";"
+				+ prDescripcionAdicional + ";" + prInformacionAdicionalNombre + ";" + prInformacionAdicionalValor + ";"
+				+ prPrecioUnitario + ";" + prCantidad + ";" + prUnidadMedida + ";" + prPorcentajeDescuento + ";"
+				+ prPorcentajeCargo + ";" + prRazonDescuento + ";" + prBaseGravable + ";" + prIva + ";" + prIc + ";"
+				+ prIca + ";" + prInc + ";" + prReteIva + ";" + prReteFuente + ";" + prReteIca + ";" + prFtoHorticultura
+				+ ";" + prTimbre + ";" + prBolsas + ";" + prIncarbono + ";" + prInCombustibles + ";"
+				+ prSobretasaCombustibles + ";" + prSordicom + ";" + prOtrasContribuciones + ";" + prMarcaProducto + ";"
+				+ prModeloProducto + ";" + prTipoIdMandante + ";" + prNumeroIdMandante + ";" + expCondicionesEntrega
+				+ ";" + expSubpartidaArancelaria + ";" + campo85 + ";" + entDepMunicipio + ";" + entCodigoPostal + ";"
+				+ entDireccionEntrega + ";" + campo89 + ";" + otrElaborado + ";" + otrRevisado + ";" + otrVendedor + ";"
+				+ fcObservacionesItem + ";" + campo94 + ";" + campo95 + ";" + campo96 + ";" + campo97;
+	}
+
 }

@@ -5,6 +5,10 @@ import java.util.List;
 
 import com.jtc.app.secondary.entity.FEInvoice;
 
+/**
+ * Esta interface define los servicios relacionados a la clase FEInvoice.
+ *
+ */
 public interface FEInvoiceService {
 	
 	public List<FEInvoice> getInvoicesByStatus(int status);

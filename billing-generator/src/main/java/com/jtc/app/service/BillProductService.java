@@ -4,6 +4,10 @@ import java.util.List;
 
 import com.jtc.app.primary.entity.BillProduct;
 
+/**
+ * Esta interface define los servicios relacionados a la clase BillProduct.
+ *
+ */
 public interface BillProductService {
 	public BillProduct saveBillProduct(BillProduct billProduct) throws Exception;
 	public List<BillProduct> getBillProducts();

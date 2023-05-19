@@ -4,6 +4,10 @@ import java.util.List;
 
 import com.jtc.app.primary.entity.InvoiceResume;
 
+/**
+ * Esta interface define los servicios relacionados a la clase InvoiceResume.
+ *
+ */
 public interface InvoiceResumeService {
 
 	public InvoiceResume saveInvoiceResume(InvoiceResume invoiceResume) throws Exception;

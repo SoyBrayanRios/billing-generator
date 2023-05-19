@@ -17,6 +17,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Esta clase define un objeto que contiene los datos de cancelaciones de contratos para que no se 
+ * generen cobros al calcular la facturación.
+ * Estos datos se encuentran almacenados en la tabla "cancellation" de la base de datos.
+ *
+ */
 @Entity
 @Table(name = "cancellation")
 @NoArgsConstructor

@@ -27,6 +27,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * Esta clase define un objeto que contiene los datos de cobro de un paquete de facturación.
+ * Estos datos se encuentran almacenados en la tabla "invoice_resume" de la base de datos.
+ *
+ */
 @Entity
 @Table(name = "payment_plan")
 @NoArgsConstructor
@@ -181,7 +186,7 @@ public class PaymentType {
 		if (annualCharge) {
 			Long[] valQuant = new Long[2];
 			valQuant[0] = 1L;
-			valQuant[1] = discount != null && discount > 0L ? this.packagePrice * (discount / 100) : this.packagePrice;
+			valQuant[1] = discount != null && discount > 0L ? this.packagePrice * ((100 - discount) / 100) : this.packagePrice;
 			invoiceDetailMap.put(modulePlan.equals("FE") ? CONCEPTS[3][0]
 							: modulePlan.equals("NE") ? CONCEPTS[8][0]
 							: CONCEPTS[11][0], valQuant);
@@ -219,7 +224,8 @@ public class PaymentType {
 	}
 	
 	/**
-	 * Extrae el valor por cada documento emitido contenido en un JSON de tarifas con la siguiente estructura:
+	 * Extrae el valor por cada documento emitido contenido en un JSON de tarifas con la siguiente estructura 
+	 * según la cantidad de documentos emitidos en el mes:
 	 * {"Rangos":[{"Desde":0,"Hasta":1000,"Valor":100},{....}]}
 	 * @param docQuantity (Cantidad de documentos emitidos)
 	 * @return Long con el valor que se debe cobrar por cada documento emitido
@@ -242,9 +248,10 @@ public class PaymentType {
 	}
 	
 	/**
-	 * Extrae el valor de un paquete de documentos contenidos en un JSON de tarifas con la siguiente estructura:
+	 * Extrae el valor de un paquete de documentos contenidos en un JSON de tarifas con la siguiente estructura 
+	 * según el nombre del paquete:
 	 * {"Planes":[{"Nombre":"Plan S","Desde":0,"Hasta":100,"Valor":29900},{....}]}
-	 * @param docQuantity (Cantidad de documentos emitidos)
+	 * @param pckgName (Nombre del paquete)
 	 * @return Long con el valor que se debe cobrar por el paquete de acuerdo con los documentos emitidos
 	 */
 	public Long getPricePerJsonPackage(String pckgName) {
@@ -260,7 +267,8 @@ public class PaymentType {
 	}
 	
 	/**
-	 * Extrae los detalles de un paquete de documentos contenidos en un JSON de tarifas con la siguiente estructura:
+	 * Extrae los detalles de un paquete de documentos contenidos en un JSON de tarifas con la siguiente estructura 
+	 * según la cantidad de documentos emitidos en el mes:
 	 * {"Planes":[{"Nombre":"Plan S","Desde":0,"Hasta":100,"Valor":29900},{....}]}
 	 * @param docQuantity (Cantidad de documentos emitidos)
 	 * @return List: Con la siguiente información según la posición (0) Nombre, (1) Desde, (2) Hasta, (3) Valor
@@ -336,6 +344,7 @@ public class PaymentType {
 	 * Genera la descripción del plan de nómina electrónica con los atributos del objeto padre que invoque el método y 
 	 * ajustando los valores con el IPC que les aplique.
 	 * Dicha descripción se almacena en el atributo "planDescription" del objeto.
+	 * @return La descripción del paquete con el aumento del IPC
 	 */
 	public String getGenerateAdjustedPlanDescription(Double increaseRate) {
 		switch (this.discriminatorType) {

@@ -16,6 +16,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * Esta clase define un objeto que contiene los datos básicos de los contratos de facturación, nómina y 
+ * documento soporte.
+ * Estos datos se encuentran almacenados en la tabla "contract" de la base de datos.
+ *
+ */
 @Entity
 @Table(name = "contract")
 @NoArgsConstructor

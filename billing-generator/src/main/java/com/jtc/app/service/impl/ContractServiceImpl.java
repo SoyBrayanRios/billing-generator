@@ -70,15 +70,17 @@ public class ContractServiceImpl implements ContractService {
 			paymentPlan = paymentTypeRepository.save(tempPlan);
 		}
 		// Validate if the maintenanceType exists
-		Maintenance tempMaintenance = contract.getMaintenanceType();
-		Maintenance maintenancePlan = maintenanceRepository.getMaintenanceByCostFrequency(
-				tempMaintenance.getMaintenanceCost(), tempMaintenance.getMaintenanceFrequency());
-		if (maintenancePlan == null) {
-			maintenancePlan = maintenanceRepository.save(tempMaintenance);
+		if (contract.getModule().equalsIgnoreCase("FE")) {
+			Maintenance tempMaintenance = contract.getMaintenanceType();
+			Maintenance maintenancePlan = maintenanceRepository.getMaintenanceByCostFrequency(
+					tempMaintenance.getMaintenanceCost(), tempMaintenance.getMaintenanceFrequency());
+			if (maintenancePlan == null) {
+				maintenancePlan = maintenanceRepository.save(tempMaintenance);
+			}
+			contract.setMaintenanceType(maintenancePlan);
 		}
 		// Save changes different from contract
 		contract.setPaymentPlan(paymentPlan);
-		contract.setMaintenanceType(maintenancePlan);
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTime(contract.getContractDate());
 		calendar.add(Calendar.DATE, 1);
@@ -196,7 +198,7 @@ public class ContractServiceImpl implements ContractService {
 							paymentType = getPaymentTypeByName(array[15]);
 						}*/
 						Long id = 0L;
-						if (array[18].equalsIgnoreCase("Mensual")) {
+						if (array[18].equalsIgnoreCase("Mensual") || array[18].equalsIgnoreCase("Mes Vencido")) {
 							id = 4L;
 						} else {
 							id = 8L;
@@ -398,7 +400,7 @@ public class ContractServiceImpl implements ContractService {
 					// Get payment
 
 					Long id = 0L;
-					if (array[22].equalsIgnoreCase("Mensual")) {
+					if (array[22].equalsIgnoreCase("Mensual") || array[22].equalsIgnoreCase("Mes Vencido")) {
 						id = 4L;
 					} else {
 						id = 8L;

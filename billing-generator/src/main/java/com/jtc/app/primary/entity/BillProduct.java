@@ -16,6 +16,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Esta clase define un objeto que contiene los datos de cada línea que compone una factura del archivo plano que se sube a Faceldi 
+ * y a SMART.
+ * Estos datos se encuentran almacenados en la tabla "bill_product" de la base de datos.
+ *
+ */
 @Entity
 @Table(name = "bill_product")
 @NoArgsConstructor

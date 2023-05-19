@@ -5,11 +5,15 @@ import java.util.List;
 
 import com.jtc.app.primary.entity.Invoice;
 
+/**
+ * Esta interface define los servicios relacionados a la clase Invoice.
+ *
+ */
 public interface InvoiceService {
 	
 	public Invoice saveInvoice(Invoice invoice) throws Exception;
 	public List<Invoice> getInvoices();
-	public Invoice getInvoiceByBranchNumber(Long branchId, String invoiceNumber, Long buyerId, Date issuedDate);
+	public Invoice getInvoiceByBranchNumber(Long branchId, String invoiceNumber, Date issuedDate);
 	public void deleteInvoice(Long invoiceId);
 	public void updateById(Long invoiceId) throws Exception;
 	public Long getFeIssuedInvoicesDuringContract(Long branchId, Date startDate, Date limitDate);

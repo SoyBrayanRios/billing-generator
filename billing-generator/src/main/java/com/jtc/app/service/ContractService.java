@@ -4,6 +4,10 @@ import java.util.List;
 
 import com.jtc.app.primary.entity.Contract;
 
+/**
+ * Esta interface define los servicios relacionados a la clase Contract.
+ *
+ */
 public interface ContractService {
 	public Contract saveContract(Contract contract) throws Exception;
 	public List<Contract> getContracts();

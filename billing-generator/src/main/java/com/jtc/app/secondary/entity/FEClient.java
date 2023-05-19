@@ -7,6 +7,12 @@ import javax.persistence.Table;
 
 import lombok.Data;
 
+/**
+ * Esta clase define un objeto que contiene los datos básicos necesarios de los clientes de facturación y 
+ * documento soporte almacenados en la base de datos de producción de Faceldi.
+ * Estos datos se encuentran almacenados en la tabla "clientes" de la base de datos.
+ *
+ */
 @Entity
 @Table(name = "clientes")
 @Data

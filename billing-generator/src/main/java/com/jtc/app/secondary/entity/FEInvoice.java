@@ -9,6 +9,12 @@ import javax.persistence.Table;
 
 import lombok.Data;
 
+/**
+ * Esta clase define un objeto que contiene los datos básicos de las facturas de FE y DS que se encuentran almacenadas en
+ * la base de datos de producción de Faceldi.
+ * Estos datos se encuentran almacenados en la tabla "documentos" de la base de datos.
+ *
+ */
 @Entity
 @Table(name = "documentos")
 @Data

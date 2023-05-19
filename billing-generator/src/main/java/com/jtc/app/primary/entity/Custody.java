@@ -18,6 +18,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * @deprecated Se definió en la estructura inicial pero no se implemento ya que los parámetros de cobro 
+ * establecidos en los contratos no son medibles.
+ *  
+ * Esta clase define un objeto que contiene los datos de cobro por custodia de información en producción.
+ * Estos datos se encuentran almacenados en la tabla "custody" de la base de datos.
+ *
+ */
 @Entity
 @Table(name = "custody")
 @NoArgsConstructor

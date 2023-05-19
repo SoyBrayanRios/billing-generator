@@ -8,6 +8,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Esta clase define un objeto que contiene los datos de una fila del archivo plano para cargue en SMART.
+ *
+ */
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -40,6 +44,10 @@ public class SmartReportRow {
 	private String cInvoiceLineCTaxId = "IVA SERVICIO 19%";
 	private Long idType;
 	
+	/**
+	 * Convierte los atributos del objeto en un array que contiene todos los datos requeridos para construir una 
+	 * fila del archivo plano de SMART.
+	 */
 	@Override
 	public String toString() {
 		SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd");

@@ -20,6 +20,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Esta clase define un objeto que contiene los datos de cobro por mantenimiento de un paquete de facturación.
+ * Estos datos se encuentran almacenados en la tabla "maintenance" de la base de datos.
+ *
+ */
 @Entity
 @Table(name = "maintenance")
 @NoArgsConstructor

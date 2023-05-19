@@ -18,6 +18,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Esta clase define un objeto que contiene los datos básicos de las facturas que se encuentran en Faceldi 
+ * y que fueron almacenadas en la base de datos de Kosmos.
+ * Estos datos se encuentran almacenados en la tabla "invoice" de la base de datos.
+ *
+ */
 @Entity
 @Table(name = "invoice")
 @NoArgsConstructor
